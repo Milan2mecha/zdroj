@@ -67,6 +67,13 @@ int main(void)
     sys_init();
     u8g_setup();
     sei();
+	//nastavení PWM
+	TCCR0A = 0;
+	TCCR0B = 0;
+	TCCR0A |= (1<<WGM01) | (1<<WGM00);
+	DDRD |= (1<<PD6) | (1<<PD5);
+	TCCR0A |= (1<<COM0A1); 
+	TCCR0B |= (1<<CS01) | (1<<CS00);
     while (1) 
     {
     adcMesure(0);
@@ -106,13 +113,13 @@ int main(void)
   }
   if ((temperatur>=30)&(temperatur<=60))
   {
-	  temperatur = ((((temperatur-30)*512)/30)+511);
+	  temperatur = ((((temperatur-30)*127)/30)+128);
   }
   if (temperatur>60)
   {
-	  temperatur = 1023;
+	  temperatur = 255;
   }
-  
+  OCR0A = temperatur;
   
     u8g_FirstPage(&u8g);
     do
