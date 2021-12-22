@@ -56,10 +56,9 @@ static void MX_I2C1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-char mecha[4] = {' ','0','0','0'};
-char proud[4] = {' ','0','0','0'};
-float y = 0;
-float x = 0;
+
+float t = 0;
+float p = 0;
 uint8_t pointer_p1 = 0x01;
 
 
@@ -100,6 +99,84 @@ char* trimm(float f)
 
 	return trimmed;
 }
+void drawlogoC (uint8_t x, uint8_t y){
+	  SSD1306_DrawLine((5+x), (y+5), (5+x), (y+11), 1);
+	  SSD1306_DrawLine((6+x), (y+3), (6+x), (y+13), 1);
+	  SSD1306_DrawLine((7+x), (y+3), (7+x), (y+5), 1);
+	  SSD1306_DrawLine((7+x), (y+11), (7+x), (y+13), 1);
+	  SSD1306_DrawLine((8+x), (y+14), (10+x), (y+14), 1);
+	  SSD1306_DrawLine((8+x), (y+13), (10+x), (y+13), 1);
+	  SSD1306_DrawLine((8+x), (y+2), (10+x), (y+2), 1);
+	  SSD1306_DrawLine((8+x), (y+3), (10+x), (y+3), 1);
+	  SSD1306_DrawLine((11+x), (y+3), (11+x), (y+4), 1);
+	  SSD1306_DrawLine((11+x), (y+13), (11+x), (y+12), 1);
+	  SSD1306_DrawLine((12+x), (y+4), (12+x), (y+6), 1);
+	  SSD1306_DrawLine((12+x), (y+12), (12+x), (y+10), 1);
+}
+void drawmenu1(uint8_t cursorm1, uint8_t cvcc, float x, float y)
+{
+	  SSD1306_Clear();
+	  cursorm1 = ~cursorm1;
+	  char* mecha = trimm(y);
+	  SSD1306_GotoXY (26,3);
+	  SSD1306_Putc (mecha[0], &Font_11x18, ((cursorm1 & 0x08)>>3));
+	  SSD1306_GotoXY (37,3);
+	  SSD1306_Putc (mecha[1], &Font_11x18, ((cursorm1 & 0x04)>>2));
+	  SSD1306_GotoXY (48,3);
+	  SSD1306_Putc(',', &Font_11x18, 1);
+	  SSD1306_GotoXY (59,3);
+	  SSD1306_Putc (mecha[2], &Font_11x18, ((cursorm1 & 0x02)>>1));
+	  SSD1306_GotoXY (70,3);
+	  SSD1306_Putc (mecha[3], &Font_11x18, (cursorm1 & 0x01));
+	  SSD1306_GotoXY (107,3);
+	  SSD1306_Putc('V', &Font_11x18, 1);
+	  char* proud = trimm(x);
+	  SSD1306_GotoXY (26,25);
+	  SSD1306_Putc (proud[0], &Font_11x18, ((cursorm1 & 0x80)>>7));
+	  SSD1306_GotoXY (37,25);
+	  SSD1306_Putc (proud[1], &Font_11x18, ((cursorm1 & 0x40)>>6));
+	  SSD1306_GotoXY (48,25);
+	  SSD1306_Putc(',', &Font_11x18, 1);
+	  SSD1306_GotoXY (59,25);
+	  SSD1306_Putc (proud[2], &Font_11x18, ((cursorm1 & 0x20)>>5));
+	  SSD1306_GotoXY (70,25);
+	  SSD1306_Putc (proud[3], &Font_11x18, ((cursorm1 & 0x10)>>4));
+	  SSD1306_GotoXY (107,25);
+	  SSD1306_Putc('A', &Font_11x18, 1);
+	  uint8_t xcvcc = 0;
+	  uint8_t ycvcc = 0;
+	  if (cvcc) {
+		  xcvcc = 81;
+		  ycvcc = 45;
+		  drawlogoC(92, ycvcc);
+		  SSD1306_DrawLine((5+xcvcc), (ycvcc+2), (5+xcvcc), (ycvcc+6), 1);
+		  SSD1306_DrawLine((13+xcvcc), (ycvcc+2), (13+xcvcc), (ycvcc+6), 1);
+		  SSD1306_DrawLine((6+xcvcc), (ycvcc+2), (6+xcvcc), (ycvcc+11), 1);
+		  SSD1306_DrawLine((12+xcvcc), (ycvcc+2), (12+xcvcc), (ycvcc+11), 1);
+		  SSD1306_DrawLine((7+xcvcc), (ycvcc+6), (7+xcvcc), (ycvcc+13), 1);
+		  SSD1306_DrawLine((11+xcvcc), (ycvcc+6), (11+xcvcc), (ycvcc+13), 1);
+		  SSD1306_DrawLine((8+xcvcc), (ycvcc+11), (8+xcvcc), (ycvcc+14), 1);
+		  SSD1306_DrawLine((10+xcvcc), (ycvcc+11), (10+xcvcc), (ycvcc+14), 1);
+		  SSD1306_DrawPixel((9+xcvcc), (ycvcc+13), 1);
+		  SSD1306_DrawPixel((9+xcvcc), (ycvcc+14), 1);
+	  } else {
+		  xcvcc = 20;
+		  ycvcc = 45;
+		  drawlogoC(xcvcc, ycvcc);
+		  drawlogoC((xcvcc+10), ycvcc);
+	  }
+	  SSD1306_DrawLine((2+xcvcc), ycvcc , (25+xcvcc), ycvcc, 1);
+	  SSD1306_DrawLine(xcvcc, (ycvcc+2), xcvcc, (ycvcc+15), 1);
+	  SSD1306_DrawLine((2+xcvcc), (ycvcc+17), (25+xcvcc), (ycvcc+17), 1);
+	  SSD1306_DrawLine((27+xcvcc), (ycvcc+2), (27+xcvcc), (ycvcc+15), 1);
+	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+1), 1);
+	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+16), 1);
+	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+1), 1);
+	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+16), 1);
+
+	  SSD1306_UpdateScreen(); // update screen
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -140,40 +217,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  SSD1306_Clear();
-	  char* mecha = trimm(y);
-	  SSD1306_GotoXY (26,3);
-	  SSD1306_Putc (mecha[0], &Font_11x18, ((~pointer_p1 & 0x08)>>3));
-	  SSD1306_GotoXY (37,3);
-	  SSD1306_Putc (mecha[1], &Font_11x18, ((~pointer_p1 & 0x04)>>2));
-	  SSD1306_GotoXY (48,3);
-	  SSD1306_Putc(',', &Font_11x18, 1);
-	  SSD1306_GotoXY (59,3);
-	  SSD1306_Putc (mecha[2], &Font_11x18, ((~pointer_p1 & 0x02)>>1));
-	  SSD1306_GotoXY (70,3);
-	  SSD1306_Putc (mecha[3], &Font_11x18, (~pointer_p1 & 0x01));
-	  SSD1306_GotoXY (107,3);
-	  SSD1306_Putc('V', &Font_11x18, 1);
-	  char* proud = trimm(x);
-	  SSD1306_GotoXY (26,25);
-	  SSD1306_Putc (proud[0], &Font_11x18, ((~pointer_p1 & 0x80)>>7));
-	  SSD1306_GotoXY (37,25);
-	  SSD1306_Putc (proud[1], &Font_11x18, ((~pointer_p1 & 0x40)>>6));
-	  SSD1306_GotoXY (48,25);
-	  SSD1306_Putc(',', &Font_11x18, 1);
-	  SSD1306_GotoXY (59,25);
-	  SSD1306_Putc (proud[2], &Font_11x18, ((~pointer_p1 & 0x20)>>5));
-	  SSD1306_GotoXY (70,25);
-	  SSD1306_Putc (proud[3], &Font_11x18, ((~pointer_p1 & 0x10)>>4));
-	  SSD1306_GotoXY (107,25);
-	  SSD1306_Putc('A', &Font_11x18, 1);
-	  SSD1306_DrawLine(11, 45, 32, 45, 1);
-	  SSD1306_DrawLine(10, 46, 10, 62, 1);
-	  SSD1306_DrawLine(11, 62, 32, 62, 1);
-	  SSD1306_DrawLine(33, 46, 33, 62, 1);
-	  SSD1306_UpdateScreen(); // update screen
-	  y += 0.05 ;
-	  x += 0.025;
+	  drawmenu1(pointer_p1, 1,t, p);
+	  t += 0.05 ;
+	  p += 0.025;
 	  pointer_p1 *= 2;
 	  if(pointer_p1 == 0)
 	  {
