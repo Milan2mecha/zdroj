@@ -75,10 +75,12 @@
 <board>
 <fusionsync huburn="a.YnVzaW5lc3M6c3BzdHJ1dG5vdjM" projecturn="a.YnVzaW5lc3M6c3BzdHJ1dG5vdjMjMjAyMDAzMzEyODExMTAyMDY" f3durn="urn:adsk.wipprod:dm.lineage:tzPS94EqTMquKnj5MIRSqw" pcbguid="5c4cd1a3-4ed4-4477-aad7-c409a0e1ec90" lastpulledtime="" lastsyncedchangeguid="bf5b5c15-012f-dc76-c788-9961873cef67"/>
 <plain>
-<wire x1="-3.937" y1="-0.635" x2="159.873" y2="-0.635" width="0" layer="20"/>
-<wire x1="159.873" y1="-0.635" x2="160" y2="100" width="0" layer="20"/>
-<wire x1="160" y1="100" x2="-3.81" y2="98.73" width="0" layer="20"/>
-<wire x1="-3.81" y1="98.73" x2="-3.937" y2="-0.635" width="0" layer="20"/>
+<wire x1="-3.937" y1="-0.635" x2="59.543" y2="-0.635" width="0" layer="20"/>
+<wire x1="59.543" y1="-0.635" x2="59.67" y2="41.58" width="0" layer="20"/>
+<wire x1="59.67" y1="41.58" x2="-3.81" y2="41.58" width="0" layer="20"/>
+<wire x1="-3.81" y1="41.58" x2="-3.937" y2="-0.635" width="0" layer="20"/>
+<dimension x1="-3.81" y1="41.58" x2="-3.937" y2="-0.635" x3="-8.85893125" y3="20.487496875" textsize="1.778" layer="1"/>
+<dimension x1="59.67" y1="41.58" x2="-3.81" y2="41.58" x3="27.93" y3="46.99" textsize="1.778" layer="1"/>
 </plain>
 <libraries>
 <library name="rcl" urn="urn:adsk.eagle:library:334">
