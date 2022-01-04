@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "ssd1306.h"
 #include "fonts.h"
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,11 +65,14 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-float t = 0;
+float Im = 0;
+float Um = 0;
+float teplota = 0;
 float p = 0;
 uint8_t pointer_p1 = 0x01;
 uint8_t dataDAC [3] = {0x40, 0xFF, 0xFF};
 uint32_t ADCout [4];
+
 
 char* trimm(float f)
 {
@@ -190,15 +194,6 @@ void setDAC1 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 n
 	dataDAC [2] = (data << 4) & 0xf0;
 	HAL_I2C_Master_Transmit(&hi2c2, (0b1100001<<1), dataDAC, 3, 10);
 }
-uint16_t readADC1(){
-	uint16_t data;
-	setDAC1(0x666);
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1, 1);
-	data = HAL_ADC_GetValue(&hadc1);
-	HAL_ADC_Stop(&hadc1);
-	return data;
-}
 
 /* USER CODE END 0 */
 
@@ -237,20 +232,41 @@ int main(void)
   /* USER CODE BEGIN 2 */
   SSD1306_Init();
   HAL_ADC_Start_DMA(&hadc1, ADCout, 4);
+  drawmenu1(pointer_p1, 1,0, 0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  drawmenu1(pointer_p1, 1,t, ((p*5)/4095));
+	  float rozdilchI = 0;
+	  float rozdilchU = 0;
+	  uint8_t refreshflag = 0;
 	  p += 1;
 	  pointer_p1 *= 2;
-	  t = ADCout[0];
-	  t = ((t*3.3)/4095)*2;
+	  rozdilchI = Im - ((ADCout[0]*6.6)/4095);
+	  if((rozdilchI > 0.01)||(rozdilchI < -0.01))
+	  {
+		  Im = (ADCout[0]*6.6)/ 4095;
+		  refreshflag |= 0x01;
+	  }
+	  rozdilchU = Um - (((ADCout[1]*6.6)/4095)-((ADCout[2]*6.6)/4095));
+	  if((rozdilchU > 0.01)||(rozdilchU < -0.01))
+	  {
+		  Um = (((ADCout[1]*6.6)/4095)-((ADCout[2]*6.6)/4095));
+		  refreshflag |= 0x01;
+	  }
+	  teplota = (ADCout[3]*3.3)/ 4095; // adc => V
+	  teplota = 10000 * (teplota / ( 3.3 - teplota)); // V => R NTC
+	  teplota = 1/((log(teplota/100000)/4000)+(1/298.15)); // RNTC => K
+	  teplota = teplota - 273.15;
 	  if(pointer_p1 == 0)
 	  {
 		  pointer_p1 = 1;
+	  }
+	  if(refreshflag > 0)
+	  {
+		  drawmenu1(pointer_p1, 1,Im, ((p*5)/4095));
 	  }
 	  if(p>0xFFF){p=0;}
 	  setDAC1(p);
