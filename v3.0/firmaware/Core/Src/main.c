@@ -79,7 +79,7 @@ uint16_t setmodeflag = 0;
 uint8_t tlacitko [4];
 uint8_t poslednistav [4];
 uint8_t debounce [4];
-
+uint8_t cursor = 0;
 char* trimm(float f)
 {
 	static char trimmed [4];
@@ -163,35 +163,41 @@ void drawmenu1(uint8_t cursorm1, uint8_t cvcc, float x, float y)
 	  SSD1306_Putc('A', &Font_11x18, 1);
 	  uint8_t xcvcc = 0;
 	  uint8_t ycvcc = 0;
+	  switch (cvcc) {
+		case 1:
+			  xcvcc = 81;
+			  ycvcc = 45;
+			  drawlogoC(92, ycvcc);
+			  SSD1306_DrawLine((5+xcvcc), (ycvcc+2), (5+xcvcc), (ycvcc+6), 1);
+			  SSD1306_DrawLine((13+xcvcc), (ycvcc+2), (13+xcvcc), (ycvcc+6), 1);
+			  SSD1306_DrawLine((6+xcvcc), (ycvcc+2), (6+xcvcc), (ycvcc+11), 1);
+			  SSD1306_DrawLine((12+xcvcc), (ycvcc+2), (12+xcvcc), (ycvcc+11), 1);
+			  SSD1306_DrawLine((7+xcvcc), (ycvcc+6), (7+xcvcc), (ycvcc+13), 1);
+			  SSD1306_DrawLine((11+xcvcc), (ycvcc+6), (11+xcvcc), (ycvcc+13), 1);
+			  SSD1306_DrawLine((8+xcvcc), (ycvcc+11), (8+xcvcc), (ycvcc+14), 1);
+			  SSD1306_DrawLine((10+xcvcc), (ycvcc+11), (10+xcvcc), (ycvcc+14), 1);
+			  SSD1306_DrawPixel((9+xcvcc), (ycvcc+13), 1);
+			  SSD1306_DrawPixel((9+xcvcc), (ycvcc+14), 1);
+			break;
+		case 2:
+			  xcvcc = 20;
+			  ycvcc = 45;
+			  drawlogoC(xcvcc, ycvcc);
+			  drawlogoC((xcvcc+10), ycvcc);
+			break;
+		default:
+			break;
+	}
 	  if (cvcc) {
-		  xcvcc = 81;
-		  ycvcc = 45;
-		  drawlogoC(92, ycvcc);
-		  SSD1306_DrawLine((5+xcvcc), (ycvcc+2), (5+xcvcc), (ycvcc+6), 1);
-		  SSD1306_DrawLine((13+xcvcc), (ycvcc+2), (13+xcvcc), (ycvcc+6), 1);
-		  SSD1306_DrawLine((6+xcvcc), (ycvcc+2), (6+xcvcc), (ycvcc+11), 1);
-		  SSD1306_DrawLine((12+xcvcc), (ycvcc+2), (12+xcvcc), (ycvcc+11), 1);
-		  SSD1306_DrawLine((7+xcvcc), (ycvcc+6), (7+xcvcc), (ycvcc+13), 1);
-		  SSD1306_DrawLine((11+xcvcc), (ycvcc+6), (11+xcvcc), (ycvcc+13), 1);
-		  SSD1306_DrawLine((8+xcvcc), (ycvcc+11), (8+xcvcc), (ycvcc+14), 1);
-		  SSD1306_DrawLine((10+xcvcc), (ycvcc+11), (10+xcvcc), (ycvcc+14), 1);
-		  SSD1306_DrawPixel((9+xcvcc), (ycvcc+13), 1);
-		  SSD1306_DrawPixel((9+xcvcc), (ycvcc+14), 1);
-	  } else {
-		  xcvcc = 20;
-		  ycvcc = 45;
-		  drawlogoC(xcvcc, ycvcc);
-		  drawlogoC((xcvcc+10), ycvcc);
+		  	  SSD1306_DrawLine((2+xcvcc), ycvcc , (25+xcvcc), ycvcc, 1);
+		  	  SSD1306_DrawLine(xcvcc, (ycvcc+2), xcvcc, (ycvcc+15), 1);
+		  	  SSD1306_DrawLine((2+xcvcc), (ycvcc+17), (25+xcvcc), (ycvcc+17), 1);
+		  	  SSD1306_DrawLine((27+xcvcc), (ycvcc+2), (27+xcvcc), (ycvcc+15), 1);
+		  	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+1), 1);
+		  	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+16), 1);
+		  	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+1), 1);
+		  	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+16), 1);
 	  }
-	  SSD1306_DrawLine((2+xcvcc), ycvcc , (25+xcvcc), ycvcc, 1);
-	  SSD1306_DrawLine(xcvcc, (ycvcc+2), xcvcc, (ycvcc+15), 1);
-	  SSD1306_DrawLine((2+xcvcc), (ycvcc+17), (25+xcvcc), (ycvcc+17), 1);
-	  SSD1306_DrawLine((27+xcvcc), (ycvcc+2), (27+xcvcc), (ycvcc+15), 1);
-	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+1), 1);
-	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+16), 1);
-	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+1), 1);
-	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+16), 1);
-
 	  SSD1306_UpdateScreen(); // update screen
 }
 void setDAC1 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 na I2C2
@@ -210,9 +216,23 @@ void readbuttons()
 		  poslednistav[0] = tlacitko[0];
 		  if(tlacitko[0] == 0)
 		  {
-			  setmodeflag = 100;
-			  debounce[0] = 10;
-		  }
+			setmodeflag = 500;
+			debounce[0] = 10;
+			if(cursor == 0)
+			{
+				  cursor = 0x04;
+			}else{
+			  if(cursor>0x08)
+			  {
+				  cursor = 0;
+				  setmodeflag = 10;
+			  }
+			  if((cursor>0)&&(cursor<0x10))
+			  {
+				  cursor = (cursor<<4);
+			  }
+			}
+		 }
 	  }
 	}
 	if(debounce[1] == 0)
@@ -223,8 +243,26 @@ void readbuttons()
 		  poslednistav[1] = tlacitko[1];
 		  if(tlacitko[1] == 0)
 		  {
-			  setmodeflag = 100;
+			  setmodeflag = 500;
 			  debounce[1] = 10;
+				if(cursor == 0)
+				{
+					  cursor = 0x04;
+				}
+				else
+				{
+					switch (cursor) {
+						case 0x80:
+							cursor = 0x10;
+							break;
+						case 0x08:
+							cursor = 0x01;
+							break;
+						default:
+							cursor *= 2;
+							break;
+					}
+				}
 		  }
 	  }
 	}
@@ -236,8 +274,27 @@ void readbuttons()
 		  poslednistav[2] = tlacitko[2];
 		  if(tlacitko[2] == 0)
 		  {
-			  setmodeflag = 100;
-			  debounce[2] = 10;
+			setmodeflag = 500;
+			debounce[2] = 10;
+			if(cursor == 0)
+			{
+				  cursor = 0x04;
+			}
+			else
+			{
+				switch (cursor) {
+					case 0x01:
+						cursor = 0x08;
+						break;
+					case 0x10:
+						cursor = 0x80;
+						break;
+					default:
+						cursor = cursor>>1;
+						break;
+				}
+
+			}
 		  }
 	  }
 	}
@@ -249,7 +306,7 @@ void readbuttons()
 		  poslednistav[3] = tlacitko[3];
 		  if(tlacitko[3] == 0)
 		  {
-			  setmodeflag = 100;
+			  setmodeflag = 500;
 			  debounce[3] = 10;
 		  }
 	  }
@@ -294,7 +351,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   SSD1306_Init();
   HAL_ADC_Start_DMA(&hadc1, ADCout, 4);
-  drawmenu1(pointer_p1, 1,0, 0);
+  drawmenu1(pointer_p1, 0,0, 0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -308,13 +365,16 @@ int main(void)
 	  readbuttons();
 	  if(setmodeflag>0) //display vstoupí do interaktivního módu
 	  {
+		  if(setmodeflag == 500)
+		  {
+			  drawmenu1(cursor, 0, 22.22 , 22.22);
+		  }
 
-		  drawmenu1(2, 1, 22.22 , 22.22);
 		  if(setmodeflag > 0)
 		  {
 			  setmodeflag--;
 		  }
-		  for(uint8_t i; i<4; i++)
+		  for(uint8_t i = 0; i<4; i++)
 		  {
 			  if(debounce[i] > 0)
 			  {
