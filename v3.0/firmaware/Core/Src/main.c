@@ -80,6 +80,7 @@ uint8_t tlacitko [4];
 uint8_t poslednistav [4];
 uint8_t debounce [4];
 uint8_t cursor = 0;
+uint8_t menupage = 0;
 char* trimm(float f)
 {
 	static char trimmed [4];
@@ -200,6 +201,33 @@ void drawmenu1(uint8_t cursorm1, uint8_t cvcc, float x, float y)
 	  }
 	  SSD1306_UpdateScreen(); // update screen
 }
+void drawmenu2()
+{
+	uint16_t pz = 0;
+	uint16_t temp = teplota;
+	char pzc [2];
+	char tempc [2];
+	itoa(temp, tempc, 10);
+	pz = Im * Um;
+	itoa(pz, pzc, 10);
+	SSD1306_Clear();
+	SSD1306_GotoXY (10,3);
+	SSD1306_Puts("Pz =", &Font_11x18, 1);
+	SSD1306_GotoXY (65,3);
+	SSD1306_Puts(pzc, &Font_11x18, 1);
+	SSD1306_GotoXY (107,3);
+	SSD1306_Putc('W', &Font_11x18, 1);
+	SSD1306_GotoXY (10,25);
+	SSD1306_Puts("tep=", &Font_11x18, 1);
+	SSD1306_GotoXY (65,25);
+	SSD1306_Puts(tempc, &Font_11x18, 1);
+	SSD1306_GotoXY (107,25);
+	SSD1306_Putc('C', &Font_11x18, 1);
+	SSD1306_GotoXY (107,43);
+	SSD1306_Putc('%', &Font_11x18, 1);
+	SSD1306_UpdateScreen(); // update screen
+
+}
 void setDAC1 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 na I2C2
 {
 	dataDAC [1] = (data >> 4);
@@ -306,13 +334,23 @@ void readbuttons()
 		  poslednistav[3] = tlacitko[3];
 		  if(tlacitko[3] == 0)
 		  {
+			  if((setmodeflag > 0)||(menupage>0))
+			  {
+				  menupage++;
+			  }
 			  setmodeflag = 500;
 			  debounce[3] = 10;
+			  if(menupage>1)
+			  {
+				  menupage = 0;
+				  setmodeflag = 10;
+			  }
 		  }
 	  }
 	}
 
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -361,13 +399,23 @@ int main(void)
 	  float rozdilchI = 0;
 	  float rozdilchU = 0;
 	  uint8_t refreshflag = 0;
+
+
 	  p += 1;
 	  readbuttons();
 	  if(setmodeflag>0) //display vstoupí do interaktivního módu
 	  {
 		  if(setmodeflag == 500)
 		  {
-			  drawmenu1(cursor, 0, 22.22 , 22.22);
+			  switch (menupage) {
+				case 1:
+					drawmenu2();
+					setmodeflag = 750;
+					break;
+				default:
+					drawmenu1(cursor, 0, 22.22 , 22.22);
+					break;
+			}
 		  }
 
 		  if(setmodeflag > 0)
@@ -381,7 +429,10 @@ int main(void)
 				  debounce[i]--;
 			  }
 		  }
-
+		  if(setmodeflag == 0)
+		  {
+			 menupage = 0;
+		  }
 		  HAL_Delay(1);
 	  }
 	  else
