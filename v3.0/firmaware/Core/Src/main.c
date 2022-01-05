@@ -75,7 +75,10 @@ float p = 0;
 uint8_t pointer_p1 = 0x01;
 uint8_t dataDAC [3] = {0x40, 0xFF, 0xFF};
 uint32_t ADCout [4];
-uint8_t setmodeflag = 0;
+uint16_t setmodeflag = 0;
+uint8_t tlacitko [4];
+uint8_t poslednistav [4];
+uint8_t debounce [4];
 
 char* trimm(float f)
 {
@@ -197,7 +200,62 @@ void setDAC1 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 n
 	dataDAC [2] = (data << 4) & 0xf0;
 	HAL_I2C_Master_Transmit(&hi2c2, (0b1100001<<1), dataDAC, 3, 10);
 }
+void readbuttons()
+{
+	if(debounce[0] == 0)
+	{
+	  tlacitko[0] = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4);
+	  if(tlacitko[0] != poslednistav[0])
+	  {
+		  poslednistav[0] = tlacitko[0];
+		  if(tlacitko[0] == 0)
+		  {
+			  setmodeflag = 100;
+			  debounce[0] = 10;
+		  }
+	  }
+	}
+	if(debounce[1] == 0)
+	{
+	  tlacitko[1] = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5);
+	  if(tlacitko[1] != poslednistav[1])
+	  {
+		  poslednistav[1] = tlacitko[1];
+		  if(tlacitko[1] == 0)
+		  {
+			  setmodeflag = 100;
+			  debounce[1] = 10;
+		  }
+	  }
+	}
+	if(debounce[2] == 0)
+	{
+	  tlacitko[2] = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6);
+	  if(tlacitko[2] != poslednistav[2])
+	  {
+		  poslednistav[2] = tlacitko[2];
+		  if(tlacitko[2] == 0)
+		  {
+			  setmodeflag = 100;
+			  debounce[2] = 10;
+		  }
+	  }
+	}
+	if(debounce[3] == 0)
+	{
+	  tlacitko[3] = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7);
+	  if(tlacitko[3] != poslednistav[3])
+	  {
+		  poslednistav[3] = tlacitko[3];
+		  if(tlacitko[3] == 0)
+		  {
+			  setmodeflag = 100;
+			  debounce[3] = 10;
+		  }
+	  }
+	}
 
+}
 /* USER CODE END 0 */
 
 /**
@@ -247,20 +305,32 @@ int main(void)
 	  float rozdilchU = 0;
 	  uint8_t refreshflag = 0;
 	  p += 1;
-	  if(setmodeflag>0)
+	  readbuttons();
+	  if(setmodeflag>0) //display vstoupí do interaktivního módu
 	  {
 
 		  drawmenu1(2, 1, 22.22 , 22.22);
-		  setmodeflag--;
-		  HAL_Delay(10);
+		  if(setmodeflag > 0)
+		  {
+			  setmodeflag--;
+		  }
+		  for(uint8_t i; i<4; i++)
+		  {
+			  if(debounce[i] > 0)
+			  {
+				  debounce[i]--;
+			  }
+		  }
+
+		  HAL_Delay(1);
 	  }
 	  else
 	  {
 		  // není v setmode
-		  rozdilchI = Im - ((ADCout[0]*6.6)/4095);  // Aktualní - nová hodnota
+		  rozdilchI = Im - ((ADCout[0]*6.34)/4095);  // Aktualní - nová hodnota
 		  if((rozdilchI > 0.01)||(rozdilchI < -0.01))
 		  {
-			  Im = (ADCout[0]*6.6)/ 4095;
+			  Im = (ADCout[0]*6.34)/ 4095;
 			  refreshflag |= 0x01;
 		  }
 		  rozdilchU = Um - (((ADCout[1]*6.6)/4095)-((ADCout[2]*6.6)/4095)); // Aktualní - nová hodnota
@@ -568,7 +638,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pins : PA4 PA5 PA6 PA7 */
   GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB0 PB1 */
