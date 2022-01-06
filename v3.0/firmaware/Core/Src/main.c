@@ -78,9 +78,11 @@ uint32_t ADCout [4];
 uint16_t setmodeflag = 0;
 uint8_t tlacitko [4];
 uint8_t poslednistav [4];
-uint8_t debounce [4];
+uint8_t debounce [5];
 uint8_t cursor = 0;
 uint8_t menupage = 0;
+float setvoltage = 0;
+float setcurrent = 0;
 char* trimm(float f)
 {
 	static char trimmed [4];
@@ -234,7 +236,7 @@ void setDAC1 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 n
 	dataDAC [2] = (data << 4) & 0xf0;
 	HAL_I2C_Master_Transmit(&hi2c2, (0b1100001<<1), dataDAC, 3, 10);
 }
-void readbuttons()
+void readbuttons()	//pulling tlačítek
 {
 	if(debounce[0] == 0)
 	{
@@ -351,6 +353,51 @@ void readbuttons()
 
 }
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení kroku encoderu
+{
+	if(GPIO_Pin == GPIO_PIN_0)
+	{
+		if(debounce[4] == 0)
+		{
+		int8_t i = 1;
+		setmodeflag = 500;
+		uint8_t direct = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1);
+		if(direct == 0)
+		{
+			i = -1;
+		}
+		switch (cursor) {
+			case 0x10:
+				setvoltage = setvoltage + (0.01 * i);
+				break;
+			case 0x20:
+				setvoltage = setvoltage + (0.1 * i);
+				break;
+			case 0x40:
+				setvoltage = setvoltage + i;
+				break;
+			case 0x80:
+				setcurrent = setvoltage + (10*i);
+				break;
+			case 0x01:
+				setcurrent = setcurrent + (0.01 * i);
+				break;
+			case 0x02:
+				setcurrent = setcurrent + (0.1 * i);
+				break;
+			case 0x04:
+				setcurrent = setcurrent + i;
+				break;
+			case 0x08:
+				setcurrent = setcurrent + (10*i);
+				break;
+			default:
+				break;
+		}
+		debounce[4] = 10;
+		}
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -413,7 +460,7 @@ int main(void)
 					setmodeflag = 750;
 					break;
 				default:
-					drawmenu1(cursor, 0, 22.22 , 22.22);
+					drawmenu1(cursor, 0, setvoltage , setcurrent);
 					break;
 			}
 		  }
@@ -422,7 +469,7 @@ int main(void)
 		  {
 			  setmodeflag--;
 		  }
-		  for(uint8_t i = 0; i<4; i++)
+		  for(uint8_t i = 0; i<5; i++)
 		  {
 			  if(debounce[i] > 0)
 			  {
@@ -746,16 +793,25 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : PA4 PA5 PA6 PA7 */
   GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB0 PB1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
+  /*Configure GPIO pin : PB0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB2 PB13 PB14 PB15 */
@@ -764,6 +820,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 }
 
