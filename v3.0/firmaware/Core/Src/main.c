@@ -83,6 +83,9 @@ uint8_t cursor = 0;
 uint8_t menupage = 0;
 float setvoltage = 0;
 float setcurrent = 0;
+float Uadc = 3.17;
+float offset = 0.15;
+
 char* trimm(float f)
 {
 	static char trimmed [4];
@@ -352,6 +355,20 @@ void readbuttons()	//pulling tlačítek
 	}
 
 }
+float ADCtoVoltage(uint16_t ADCvalue)
+{
+	float voltage = 0;
+	voltage = ((ADCvalue*Uadc)/4095) + 0.15;
+	return voltage;
+}
+
+float Voltagetoteperatur(float napeti)
+{
+	  napeti = (Uadc/ napeti)-1;
+	  napeti = 1/(((log(napeti))/3380)+(1/298.5));
+	  napeti = napeti - 273.15; // K => C
+	  return napeti;
+}
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení kroku encoderu
 {
@@ -485,16 +502,16 @@ int main(void)
 	  else
 	  {
 		  // není v setmode
-		  rozdilchI = Im - ((ADCout[0]*6.34)/4095);  // Aktualní - nová hodnota
+		  rozdilchI = Im - (ADCtoVoltage(ADCout[0])*2);  // Aktualní - nová hodnota
 		  if((rozdilchI > 0.01)||(rozdilchI < -0.01))
 		  {
-			  Im = (ADCout[0]*6.34)/ 4095;
+			  Im = (ADCtoVoltage(ADCout[0])*2);
 			  refreshflag |= 0x01;
 		  }
-		  rozdilchU = Um - (((ADCout[1]*6.6)/4095)-((ADCout[2]*6.6)/4095)); // Aktualní - nová hodnota
+		  rozdilchU = Um - ((ADCtoVoltage(ADCout[1])*2)-(ADCtoVoltage(ADCout[2])*2)); // Aktualní - nová hodnota
 		  if((rozdilchU > 0.01)||(rozdilchU < -0.01))
 		  {
-			  Um = (((ADCout[1]*6.6)/4095)-((ADCout[2]*6.6)/4095));
+			  Um = (ADCtoVoltage(ADCout[1])*2)-(ADCtoVoltage(ADCout[2])*2);
 			  refreshflag |= 0x01;
 		  }
 		  if(refreshflag > 0)  // pokud je příznak změny údajů na display obnoví display
@@ -502,10 +519,8 @@ int main(void)
 			  drawmenu1(0, 1, Im , ((p*5)/4095));
 		  }
 	  }
-	  teplota = (ADCout[3]*3.3)/ 4095; // adc => V
-	  teplota = 10000 * (teplota / ( 3.3 - teplota)); // V => R NTC
-	  teplota = 1/((log(teplota/100000)/4000)+(1/298.15)); // RNTC => K
-	  teplota = teplota - 273.15; // K => C
+	  teplota = Voltagetoteperatur(ADCtoVoltage(ADCout[3]));
+
 	  if(p>0xFFF){p=0;}
 	  setDAC1(p);
 
