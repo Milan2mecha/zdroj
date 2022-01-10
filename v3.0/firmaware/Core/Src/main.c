@@ -71,7 +71,6 @@ static void MX_TIM2_Init(void);
 float Im = 0;
 float Um = 0;
 float teplota = 0;
-float p = 0;
 uint8_t pointer_p1 = 0x01;
 uint8_t dataDAC [3] = {0x40, 0xFF, 0xFF};
 uint32_t ADCout [4];
@@ -83,170 +82,16 @@ uint8_t cursor = 0;
 uint8_t menupage = 0;
 float setvoltage = 0;
 float setcurrent = 0;
-float Uadc = 3.2;
-float offset = 0.0;
+float Uadc = 3.2;		//vstupní napětí ADC
+float offset = 0.0;		//offset ADC
 uint16_t ventilatorper = 0;  //výkon ventilátoru v %
 uint8_t ventilatorhyst = 0;	//hystereze ventilatoru
 
-char* trimm(float f)
-{
-	static char trimmed [4];
-
-	f *= 100;
-	uint16_t g = f;
-	itoa(g, trimmed, 10);
-
-	if(g<10)
-	{
-		trimmed[3] = trimmed[0];
-		trimmed[2] = '0';
-		trimmed[1] = '0';
-		trimmed[0] = ' ';
 
 
-	}
-	if((g<100)&&(g>9))
-	{
-		trimmed[3] = trimmed[1];
-		trimmed[2] = trimmed[0];
-		trimmed[1] = '0';
-		trimmed[0] = ' ';
 
-	}
-	if((g<1000)&&(g>99))
-	{
-		for(uint8_t i = 3; i>0; i--)
-		{
-			trimmed[i] = trimmed[i-1];
-		}
-		trimmed[0] = ' ';
+//vstupy
 
-	}
-
-	return trimmed;
-}
-void drawlogoC (uint8_t x, uint8_t y){
-	  SSD1306_DrawLine((5+x), (y+5), (5+x), (y+11), 1);
-	  SSD1306_DrawLine((6+x), (y+3), (6+x), (y+13), 1);
-	  SSD1306_DrawLine((7+x), (y+3), (7+x), (y+5), 1);
-	  SSD1306_DrawLine((7+x), (y+11), (7+x), (y+13), 1);
-	  SSD1306_DrawLine((8+x), (y+14), (10+x), (y+14), 1);
-	  SSD1306_DrawLine((8+x), (y+13), (10+x), (y+13), 1);
-	  SSD1306_DrawLine((8+x), (y+2), (10+x), (y+2), 1);
-	  SSD1306_DrawLine((8+x), (y+3), (10+x), (y+3), 1);
-	  SSD1306_DrawLine((11+x), (y+3), (11+x), (y+4), 1);
-	  SSD1306_DrawLine((11+x), (y+13), (11+x), (y+12), 1);
-	  SSD1306_DrawLine((12+x), (y+4), (12+x), (y+6), 1);
-	  SSD1306_DrawLine((12+x), (y+12), (12+x), (y+10), 1);
-}
-void drawmenu1(uint8_t cursorm1, uint8_t cvcc, float x, float y)
-{
-	  SSD1306_Clear();
-	  cursorm1 = ~cursorm1;
-	  char* mecha = trimm(y);
-	  SSD1306_GotoXY (26,3);
-	  SSD1306_Putc (mecha[0], &Font_11x18, ((cursorm1 & 0x08)>>3));
-	  SSD1306_GotoXY (37,3);
-	  SSD1306_Putc (mecha[1], &Font_11x18, ((cursorm1 & 0x04)>>2));
-	  SSD1306_GotoXY (48,3);
-	  SSD1306_Putc(',', &Font_11x18, 1);
-	  SSD1306_GotoXY (59,3);
-	  SSD1306_Putc (mecha[2], &Font_11x18, ((cursorm1 & 0x02)>>1));
-	  SSD1306_GotoXY (70,3);
-	  SSD1306_Putc (mecha[3], &Font_11x18, (cursorm1 & 0x01));
-	  SSD1306_GotoXY (107,3);
-	  SSD1306_Putc('V', &Font_11x18, 1);
-	  char* proud = trimm(x);
-	  SSD1306_GotoXY (26,25);
-	  SSD1306_Putc (proud[0], &Font_11x18, ((cursorm1 & 0x80)>>7));
-	  SSD1306_GotoXY (37,25);
-	  SSD1306_Putc (proud[1], &Font_11x18, ((cursorm1 & 0x40)>>6));
-	  SSD1306_GotoXY (48,25);
-	  SSD1306_Putc(',', &Font_11x18, 1);
-	  SSD1306_GotoXY (59,25);
-	  SSD1306_Putc (proud[2], &Font_11x18, ((cursorm1 & 0x20)>>5));
-	  SSD1306_GotoXY (70,25);
-	  SSD1306_Putc (proud[3], &Font_11x18, ((cursorm1 & 0x10)>>4));
-	  SSD1306_GotoXY (107,25);
-	  SSD1306_Putc('A', &Font_11x18, 1);
-	  uint8_t xcvcc = 0;
-	  uint8_t ycvcc = 0;
-	  switch (cvcc) {
-		case 1:
-			  xcvcc = 81;
-			  ycvcc = 45;
-			  drawlogoC(92, ycvcc);
-			  SSD1306_DrawLine((5+xcvcc), (ycvcc+2), (5+xcvcc), (ycvcc+6), 1);
-			  SSD1306_DrawLine((13+xcvcc), (ycvcc+2), (13+xcvcc), (ycvcc+6), 1);
-			  SSD1306_DrawLine((6+xcvcc), (ycvcc+2), (6+xcvcc), (ycvcc+11), 1);
-			  SSD1306_DrawLine((12+xcvcc), (ycvcc+2), (12+xcvcc), (ycvcc+11), 1);
-			  SSD1306_DrawLine((7+xcvcc), (ycvcc+6), (7+xcvcc), (ycvcc+13), 1);
-			  SSD1306_DrawLine((11+xcvcc), (ycvcc+6), (11+xcvcc), (ycvcc+13), 1);
-			  SSD1306_DrawLine((8+xcvcc), (ycvcc+11), (8+xcvcc), (ycvcc+14), 1);
-			  SSD1306_DrawLine((10+xcvcc), (ycvcc+11), (10+xcvcc), (ycvcc+14), 1);
-			  SSD1306_DrawPixel((9+xcvcc), (ycvcc+13), 1);
-			  SSD1306_DrawPixel((9+xcvcc), (ycvcc+14), 1);
-			break;
-		case 2:
-			  xcvcc = 20;
-			  ycvcc = 45;
-			  drawlogoC(xcvcc, ycvcc);
-			  drawlogoC((xcvcc+10), ycvcc);
-			break;
-		default:
-			break;
-	}
-	  if (cvcc) {
-		  	  SSD1306_DrawLine((2+xcvcc), ycvcc , (25+xcvcc), ycvcc, 1);
-		  	  SSD1306_DrawLine(xcvcc, (ycvcc+2), xcvcc, (ycvcc+15), 1);
-		  	  SSD1306_DrawLine((2+xcvcc), (ycvcc+17), (25+xcvcc), (ycvcc+17), 1);
-		  	  SSD1306_DrawLine((27+xcvcc), (ycvcc+2), (27+xcvcc), (ycvcc+15), 1);
-		  	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+1), 1);
-		  	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+16), 1);
-		  	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+1), 1);
-		  	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+16), 1);
-	  }
-	  SSD1306_UpdateScreen(); // update screen
-}
-void drawmenu2()
-{
-	uint16_t pz = 0;
-	uint16_t temp = teplota;
-	char pzc [2];
-	char tempc [2];
-	char ventc [2];
-	itoa(temp, tempc, 10);
-	itoa(ventilatorper, ventc, 10);
-	pz = Im * Um;
-	itoa(pz, pzc, 10);
-	SSD1306_Clear();
-	SSD1306_GotoXY (10,3);
-	SSD1306_Puts("Pz =", &Font_11x18, 1);
-	SSD1306_GotoXY (65,3);
-	SSD1306_Puts(pzc, &Font_11x18, 1);
-	SSD1306_GotoXY (107,3);
-	SSD1306_Putc('W', &Font_11x18, 1);
-	SSD1306_GotoXY (10,25);
-	SSD1306_Puts("tep=", &Font_11x18, 1);
-	SSD1306_GotoXY (65,25);
-	SSD1306_Puts(tempc, &Font_11x18, 1);
-	SSD1306_GotoXY (107,25);
-	SSD1306_Putc('C', &Font_11x18, 1);
-	SSD1306_GotoXY (10,43);
-	SSD1306_Puts("vent=", &Font_11x18, 1);
-	SSD1306_GotoXY (65, 43);
-	SSD1306_Puts(ventc, &Font_11x18, 1);
-	SSD1306_GotoXY (107,43);
-	SSD1306_Putc('%', &Font_11x18, 1);
-	SSD1306_UpdateScreen(); // update screen
-
-}
-void setDAC1 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 na I2C2
-{
-	dataDAC [1] = (data >> 4);
-	dataDAC [2] = (data << 4) & 0xf0;
-	HAL_I2C_Master_Transmit(&hi2c2, (0b1100001<<1), dataDAC, 3, 10);
-}
 void readbuttons()	//pulling tlačítek
 {
 	if(debounce[0] == 0)
@@ -363,13 +208,52 @@ void readbuttons()	//pulling tlačítek
 	}
 
 }
+
+//pomocné převodní funkce
+
+char* trimm(float f)
+{
+	static char trimmed [4];
+
+	f *= 100;
+	uint16_t g = f;
+	itoa(g, trimmed, 10);
+
+	if(g<10)
+	{
+		trimmed[3] = trimmed[0];
+		trimmed[2] = '0';
+		trimmed[1] = '0';
+		trimmed[0] = ' ';
+
+
+	}
+	if((g<100)&&(g>9))
+	{
+		trimmed[3] = trimmed[1];
+		trimmed[2] = trimmed[0];
+		trimmed[1] = '0';
+		trimmed[0] = ' ';
+
+	}
+	if((g<1000)&&(g>99))
+	{
+		for(uint8_t i = 3; i>0; i--)
+		{
+			trimmed[i] = trimmed[i-1];
+		}
+		trimmed[0] = ' ';
+
+	}
+
+	return trimmed;
+}
 float ADCtoVoltage(uint16_t ADCvalue)
 {
 	float voltage = 0;
 	voltage = ((ADCvalue*Uadc)/4095) + offset;
 	return voltage;
 }
-
 float Voltagetoteperatur(float napeti)
 {
 	  napeti = (Uadc/ napeti)-1;
@@ -378,8 +262,131 @@ float Voltagetoteperatur(float napeti)
 	  return napeti;
 }
 
-void ventilator(float temp)
+//funkce vykreslování displaje
+
+void drawlogoC (uint8_t x, uint8_t y){
+	  SSD1306_DrawLine((5+x), (y+5), (5+x), (y+11), 1);
+	  SSD1306_DrawLine((6+x), (y+3), (6+x), (y+13), 1);
+	  SSD1306_DrawLine((7+x), (y+3), (7+x), (y+5), 1);
+	  SSD1306_DrawLine((7+x), (y+11), (7+x), (y+13), 1);
+	  SSD1306_DrawLine((8+x), (y+14), (10+x), (y+14), 1);
+	  SSD1306_DrawLine((8+x), (y+13), (10+x), (y+13), 1);
+	  SSD1306_DrawLine((8+x), (y+2), (10+x), (y+2), 1);
+	  SSD1306_DrawLine((8+x), (y+3), (10+x), (y+3), 1);
+	  SSD1306_DrawLine((11+x), (y+3), (11+x), (y+4), 1);
+	  SSD1306_DrawLine((11+x), (y+13), (11+x), (y+12), 1);
+	  SSD1306_DrawLine((12+x), (y+4), (12+x), (y+6), 1);
+	  SSD1306_DrawLine((12+x), (y+12), (12+x), (y+10), 1);
+}
+void drawmenu1(uint8_t cursorm1, uint8_t cvcc, float x, float y)
 {
+	  SSD1306_Clear();
+	  cursorm1 = ~cursorm1;
+	  char* mecha = trimm(y);
+	  SSD1306_GotoXY (26,3);
+	  SSD1306_Putc (mecha[0], &Font_11x18, ((cursorm1 & 0x08)>>3));
+	  SSD1306_GotoXY (37,3);
+	  SSD1306_Putc (mecha[1], &Font_11x18, ((cursorm1 & 0x04)>>2));
+	  SSD1306_GotoXY (48,3);
+	  SSD1306_Putc(',', &Font_11x18, 1);
+	  SSD1306_GotoXY (59,3);
+	  SSD1306_Putc (mecha[2], &Font_11x18, ((cursorm1 & 0x02)>>1));
+	  SSD1306_GotoXY (70,3);
+	  SSD1306_Putc (mecha[3], &Font_11x18, (cursorm1 & 0x01));
+	  SSD1306_GotoXY (107,3);
+	  SSD1306_Putc('V', &Font_11x18, 1);
+	  char* proud = trimm(x);
+	  SSD1306_GotoXY (26,25);
+	  SSD1306_Putc (proud[0], &Font_11x18, ((cursorm1 & 0x80)>>7));
+	  SSD1306_GotoXY (37,25);
+	  SSD1306_Putc (proud[1], &Font_11x18, ((cursorm1 & 0x40)>>6));
+	  SSD1306_GotoXY (48,25);
+	  SSD1306_Putc(',', &Font_11x18, 1);
+	  SSD1306_GotoXY (59,25);
+	  SSD1306_Putc (proud[2], &Font_11x18, ((cursorm1 & 0x20)>>5));
+	  SSD1306_GotoXY (70,25);
+	  SSD1306_Putc (proud[3], &Font_11x18, ((cursorm1 & 0x10)>>4));
+	  SSD1306_GotoXY (107,25);
+	  SSD1306_Putc('A', &Font_11x18, 1);
+	  uint8_t xcvcc = 0;
+	  uint8_t ycvcc = 0;
+	  switch (cvcc) {
+		case 1:
+			  xcvcc = 81;
+			  ycvcc = 45;
+			  drawlogoC(92, ycvcc);
+			  SSD1306_DrawLine((5+xcvcc), (ycvcc+2), (5+xcvcc), (ycvcc+6), 1);
+			  SSD1306_DrawLine((13+xcvcc), (ycvcc+2), (13+xcvcc), (ycvcc+6), 1);
+			  SSD1306_DrawLine((6+xcvcc), (ycvcc+2), (6+xcvcc), (ycvcc+11), 1);
+			  SSD1306_DrawLine((12+xcvcc), (ycvcc+2), (12+xcvcc), (ycvcc+11), 1);
+			  SSD1306_DrawLine((7+xcvcc), (ycvcc+6), (7+xcvcc), (ycvcc+13), 1);
+			  SSD1306_DrawLine((11+xcvcc), (ycvcc+6), (11+xcvcc), (ycvcc+13), 1);
+			  SSD1306_DrawLine((8+xcvcc), (ycvcc+11), (8+xcvcc), (ycvcc+14), 1);
+			  SSD1306_DrawLine((10+xcvcc), (ycvcc+11), (10+xcvcc), (ycvcc+14), 1);
+			  SSD1306_DrawPixel((9+xcvcc), (ycvcc+13), 1);
+			  SSD1306_DrawPixel((9+xcvcc), (ycvcc+14), 1);
+			break;
+		case 2:
+			  xcvcc = 20;
+			  ycvcc = 45;
+			  drawlogoC(xcvcc, ycvcc);
+			  drawlogoC((xcvcc+10), ycvcc);
+			break;
+		default:
+			break;
+	}
+	  if (cvcc) {
+		  	  SSD1306_DrawLine((2+xcvcc), ycvcc , (25+xcvcc), ycvcc, 1);
+		  	  SSD1306_DrawLine(xcvcc, (ycvcc+2), xcvcc, (ycvcc+15), 1);
+		  	  SSD1306_DrawLine((2+xcvcc), (ycvcc+17), (25+xcvcc), (ycvcc+17), 1);
+		  	  SSD1306_DrawLine((27+xcvcc), (ycvcc+2), (27+xcvcc), (ycvcc+15), 1);
+		  	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+1), 1);
+		  	  SSD1306_DrawPixel((1+xcvcc), (ycvcc+16), 1);
+		  	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+1), 1);
+		  	  SSD1306_DrawPixel((26+xcvcc), (ycvcc+16), 1);
+	  }
+	  SSD1306_UpdateScreen(); // update screen
+}
+void drawmenu2()
+{
+	uint16_t pz = 0;
+	uint16_t temp = teplota;
+	char pzc [2];
+	char tempc [2];
+	char ventc [2];
+	itoa(temp, tempc, 10);
+	itoa(ventilatorper, ventc, 10);
+	pz = Im * Um;
+	itoa(pz, pzc, 10);
+	SSD1306_Clear();
+	SSD1306_GotoXY (10,3);
+	SSD1306_Puts("Pz =", &Font_11x18, 1);
+	SSD1306_GotoXY (65,3);
+	SSD1306_Puts(pzc, &Font_11x18, 1);
+	SSD1306_GotoXY (107,3);
+	SSD1306_Putc('W', &Font_11x18, 1);
+	SSD1306_GotoXY (10,25);
+	SSD1306_Puts("tep=", &Font_11x18, 1);
+	SSD1306_GotoXY (65,25);
+	SSD1306_Puts(tempc, &Font_11x18, 1);
+	SSD1306_GotoXY (107,25);
+	SSD1306_Putc('C', &Font_11x18, 1);
+	SSD1306_GotoXY (10,43);
+	SSD1306_Puts("vent=", &Font_11x18, 1);
+	SSD1306_GotoXY (65, 43);
+	SSD1306_Puts(ventc, &Font_11x18, 1);
+	SSD1306_GotoXY (107,43);
+	SSD1306_Putc('%', &Font_11x18, 1);
+	SSD1306_UpdateScreen(); // update screen
+
+}
+
+
+// výstupní elektrické veličiny
+
+void ventilator(float temp)  //nastavení úrovně PWM ventilátoru
+{
+	//hystereze
 	if(temp > 30)
 	{
 		ventilatorhyst = 1;
@@ -388,6 +395,7 @@ void ventilator(float temp)
 	{
 		ventilatorhyst = 0;
 	}
+	//výpočet v %
 	if(ventilatorhyst == 1)
 	{
 		ventilatorper = ((temp - 25) * 2) + 50;
@@ -399,10 +407,28 @@ void ventilator(float temp)
 	{
 		ventilatorper = 0;
 	}
+	//nastavení časovače v 8-bit
 	TIM2->CCR1 = (ventilatorper*255)/100;
 }
+void setDAC1 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 na I2C2
+{
+	dataDAC [1] = (data >> 4);
+	dataDAC [2] = (data << 4) & 0xf0;
+	HAL_I2C_Master_Transmit(&hi2c2, (0b1100001<<1), dataDAC, 3, 10);
+}
+void setVout (float napeti)	 //řízení spínaného napěťového regulátoru  + příprava pro ADC
+{
+	if(napeti < 2.5)
+	{
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, 1);
+	}
+	setDAC1((napeti+(ADCtoVoltage(ADCout[2])*2)*4095)/5);
+}
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení kroku encoderu
+
+//eventy přerušení
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení krok encoderu
 {
 	if(GPIO_Pin == GPIO_PIN_0)
 	{
@@ -416,28 +442,28 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení kroku encoderu
 			i = -1;
 		}
 		switch (cursor) {
-			case 0x10:
+			case 0x01:
 				setvoltage = setvoltage + (0.01 * i);
 				break;
-			case 0x20:
+			case 0x02:
 				setvoltage = setvoltage + (0.1 * i);
 				break;
-			case 0x40:
+			case 0x04:
 				setvoltage = setvoltage + i;
 				break;
-			case 0x80:
+			case 0x08:
 				setcurrent = setvoltage + (10*i);
 				break;
-			case 0x01:
+			case 0x10:
 				setcurrent = setcurrent + (0.01 * i);
 				break;
-			case 0x02:
+			case 0x20:
 				setcurrent = setcurrent + (0.1 * i);
 				break;
-			case 0x04:
+			case 0x40:
 				setcurrent = setcurrent + i;
 				break;
-			case 0x08:
+			case 0x80:
 				setcurrent = setcurrent + (10*i);
 				break;
 			default:
@@ -498,7 +524,6 @@ int main(void)
 	  uint8_t refreshflag = 0;
 
 
-	  p += 1;
 	  readbuttons();
 	  if(setmodeflag>0) //display vstoupí do interaktivního módu
 	  {
@@ -529,6 +554,7 @@ int main(void)
 		  if(setmodeflag == 0)
 		  {
 			 menupage = 0;
+			 setVout(setvoltage);
 		  }
 		  HAL_Delay(1);
 	  }
@@ -545,17 +571,16 @@ int main(void)
 		  if((rozdilchU > 0.01)||(rozdilchU < -0.01))
 		  {
 			  Um = (ADCtoVoltage(ADCout[1])*2)-(ADCtoVoltage(ADCout[2])*2);
+			  setVout(setvoltage);
 			  refreshflag |= 0x01;
 		  }
 		  if(refreshflag > 0)  // pokud je příznak změny údajů na display obnoví display
 		  {
-			  drawmenu1(0, 1, Im , ((p*5)/4095));
+			  drawmenu1(0, 1, Im , setvoltage);
 		  }
 	  }
 	  teplota = Voltagetoteperatur(ADCtoVoltage(ADCout[3]));
 	  ventilator(teplota);
-	  if(p>0xFFF){p=0;}
-	  setDAC1(p);
 
 
     /* USER CODE END WHILE */
