@@ -14058,11 +14058,11 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <part name="GND13" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="GND14" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="GND15" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
-<part name="R1" library="rcl_my" deviceset="R-EU_" device="M0805"/>
-<part name="R2" library="rcl_my" deviceset="R-EU_" device="M0805"/>
-<part name="R3" library="rcl_my" deviceset="R-EU_" device="M0805"/>
-<part name="R4" library="rcl_my" deviceset="R-EU_" device="M0805"/>
-<part name="R5" library="rcl_my" deviceset="R-EU_" device="M0805"/>
+<part name="R1" library="rcl_my" deviceset="R-EU_" device="M0805" value="1K5"/>
+<part name="R2" library="rcl_my" deviceset="R-EU_" device="M0805" value="4K3"/>
+<part name="R3" library="rcl_my" deviceset="R-EU_" device="M0805" value="5K1"/>
+<part name="R4" library="rcl_my" deviceset="R-EU_" device="M0805" value="6K8"/>
+<part name="R5" library="rcl_my" deviceset="R-EU_" device="M0805" value="15K"/>
 <part name="P+2" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="VCC" device=""/>
 <part name="P+3" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="VCC" device=""/>
 <part name="PAD1" library="wirepad" library_urn="urn:adsk.eagle:library:412" deviceset="3,17/1,3" device="" package3d_urn="urn:adsk.eagle:package:30833/1"/>
