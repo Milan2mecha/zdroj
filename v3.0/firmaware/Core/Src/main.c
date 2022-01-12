@@ -437,39 +437,47 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení krok encoderu
 		{
 		int8_t i = 1;
 		setmodeflag = 500;
-		if(direct == 0)
+		if(direct == 1)
 		{
 			i = -1;
 		}
 		switch (cursor) {
 			case 0x01:
-				setcurrent = setvoltage + (0.01 * i);
+				setcurrent = setcurrent + (0.01 * i);
 				break;
 			case 0x02:
-				setcurrent = setvoltage + (0.1 * i);
+				setcurrent = setcurrent + (0.1 * i);
 				break;
 			case 0x04:
-				setcurrent = setvoltage + i;
+				setcurrent = setcurrent + i;
 				break;
 			case 0x08:
-				setcurrent = setvoltage + (10*i);
+				setcurrent = setcurrent + (10*i);
 				break;
 			case 0x10:
-				setvoltage = setcurrent + (0.01 * i);
+				setvoltage = setvoltage + (0.01 * i);
 				break;
 			case 0x20:
-				setvoltage = setcurrent + (0.1 * i);
+				setvoltage = setvoltage + (0.1 * i);
 				break;
 			case 0x40:
-				setvoltage = setcurrent + i;
+				setvoltage = setvoltage + i;
 				break;
 			case 0x80:
-				setvoltage = setcurrent + (10*i);
+				setvoltage = setvoltage + (10*i);
 				break;
 			default:
 				break;
 		}
-		debounce[4] = 20;
+		if(setvoltage < 0)
+		{
+			setvoltage = 0;
+		}
+		if(setcurrent < 0)
+		{
+			setcurrent = 0;
+		}
+		debounce[4] = 10;
 		}
 	}
 }
@@ -556,7 +564,7 @@ int main(void)
 			 menupage = 0;
 			 setVout(setvoltage);
 		  }
-		  HAL_Delay(1);
+		  HAL_Delay(2);
 	  }
 	  else
 	  {
