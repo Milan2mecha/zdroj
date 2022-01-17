@@ -93,6 +93,20 @@
 <wire x1="-2.5" y1="1.4" x2="2.7" y2="1.4" width="0.127" layer="21"/>
 <circle x="0" y="0" radius="4.504440625" width="0.127" layer="21"/>
 </package>
+<package name="E1171S">
+<pad name="S1" x="-2.5" y="7" drill="0.6" shape="square"/>
+<pad name="S2" x="2.5" y="7" drill="0.6" shape="square"/>
+<pad name="C" x="0" y="-7.5" drill="0.6" shape="square"/>
+<pad name="B" x="2.5" y="-7.5" drill="0.6" shape="square"/>
+<pad name="A" x="-2.5" y="-7.5" drill="0.6" shape="square"/>
+<pad name="P$6" x="-4.5" y="0" drill="2.1"/>
+<pad name="P$7" x="4.5" y="0" drill="2.1"/>
+<wire x1="5" y1="-6.5" x2="-5" y2="-6.5" width="0.127" layer="21"/>
+<wire x1="-5" y1="-6.5" x2="-5" y2="7.5" width="0.127" layer="21"/>
+<wire x1="-5" y1="7.5" x2="5" y2="7.5" width="0.127" layer="21"/>
+<wire x1="5" y1="7.5" x2="5" y2="-6.5" width="0.127" layer="21"/>
+<circle x="0" y="0" radius="2.5" width="0.127" layer="21"/>
+</package>
 </packages>
 <symbols>
 <symbol name="ENCODER">
@@ -125,6 +139,25 @@
 </gates>
 <devices>
 <device name="" package="EC16E20-24P24C-SW">
+<connects>
+<connect gate="G$1" pin="A" pad="A"/>
+<connect gate="G$1" pin="B" pad="B"/>
+<connect gate="G$1" pin="C" pad="C"/>
+<connect gate="G$1" pin="S1" pad="S1"/>
+<connect gate="G$1" pin="S2" pad="S2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="E1171S">
+<gates>
+<gate name="G$1" symbol="ENCODER" x="0" y="-2.54"/>
+</gates>
+<devices>
+<device name="" package="E1171S">
 <connects>
 <connect gate="G$1" pin="A" pad="A"/>
 <connect gate="G$1" pin="B" pad="B"/>
