@@ -71,22 +71,58 @@ static void MX_TIM2_Init(void);
 float Im = 0;
 float Um = 0;
 float teplota = 0;
-uint8_t pointer_p1 = 0x01;
-uint8_t dataDAC [3] = {0x40, 0xFF, 0xFF};
+uint8_t dataDAC [3] = {0x40, 0x0, 0x0};
 uint32_t ADCout [4];
+
+//mód zobrazení
 uint16_t setmodeflag = 0;
+
+//polling
 uint8_t tlacitko [4];
 uint8_t poslednistav [4];
 uint8_t debounce [5];
+
+//menu 1
 uint8_t cursor = 0;
 uint8_t menupage = 0;
 float setvoltage = 0;
 float setcurrent = 0;
-float Uadc = 3.2;		//vstupní napětí ADC
+uint8_t pointer_p1 = 0x01;
+
+//servisní veličiny
+float Uadc = 3.28;		//vstupní napětí ADC
 float offset = 0.0;		//offset ADC
+float napetiBUCK[16] = {0, 1.68, 2.50, 4.28, 4.95, 6.74, 5.55, 10.01, 10.34, 12.80, 13.62, 15.40, 16.07, 17.85, 18.67, 21.13};
+uint8_t dataBUCK[16] = {0, 1, 2, 4, 3, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14, 15};
+
+//chlazení
 uint16_t ventilatorper = 0;  //výkon ventilátoru v %
 uint8_t ventilatorhyst = 0;	//hystereze ventilatoru
 
+//error
+void error(uint8_t event)
+{
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
+	SSD1306_Clear();
+	SSD1306_GotoXY (3,3);
+	SSD1306_Puts("error:", &Font_11x18, 1);
+	switch (event) {
+		case 0:
+			SSD1306_GotoXY (3,25);
+			SSD1306_Puts("mereni tep.", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			break;
+		default:
+			break;
+	}
+}
 
 
 
@@ -262,6 +298,7 @@ float Voltagetoteperatur(float napeti)
 	  return napeti;
 }
 
+
 //funkce vykreslování displaje
 
 void drawlogoC (uint8_t x, uint8_t y){
@@ -386,6 +423,11 @@ void drawmenu2()
 
 void ventilator(float temp)  //nastavení úrovně PWM ventilátoru
 {
+	// kontrola správnosti
+	if((teplota > 100)||(teplota < 1))
+	{
+		error(0);
+	}
 	//hystereze
 	if(temp > 30)
 	{
@@ -416,23 +458,36 @@ void setDAC1 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 n
 	dataDAC [2] = (data << 4) & 0xf0;
 	HAL_I2C_Master_Transmit(&hi2c2, (0b1100001<<1), dataDAC, 3, 10);
 }
+void setDAC2 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 na I2C2
+{
+	dataDAC [1] = (data >> 4);
+	dataDAC [2] = (data << 4) & 0xf0;
+	HAL_I2C_Master_Transmit(&hi2c1, (0b1100001<<1), dataDAC, 3, 10);
+}
 void setVout (float napeti)	 //řízení spínaného napěťového regulátoru  + příprava pro ADC
 {
 	if(napeti < 2.5)
 	{
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, 1);
 	}
-	setDAC1((napeti+(ADCtoVoltage(ADCout[2])*2)*4095)/5);
+	setDAC1((napeti+(ADCtoVoltage(ADCout[2])*2)*4095)/Uadc);
+}
+void setIout(float proud)
+{
+	uint16_t output;
+	output = (proud*4095)/Uadc;
+	setDAC2(output);
 }
 
 
-//eventy přerušení
+//vektory přerušení
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení krok encoderu
 {
 	uint8_t direct = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1);
 	if(GPIO_Pin == GPIO_PIN_0)
 	{
+		if((setmodeflag > 0)&&(menupage == 0)){
 		if(debounce[4] == 0)
 		{
 		int8_t i = 1;
@@ -442,28 +497,28 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení krok encoderu
 			i = -1;
 		}
 		switch (cursor) {
-			case 0x01:
+			case 0x10:
 				setcurrent = setcurrent + (0.01 * i);
 				break;
-			case 0x02:
+			case 0x20:
 				setcurrent = setcurrent + (0.1 * i);
 				break;
-			case 0x04:
+			case 0x40:
 				setcurrent = setcurrent + i;
 				break;
-			case 0x08:
+			case 0x80:
 				setcurrent = setcurrent + (10*i);
 				break;
-			case 0x10:
+			case 0x01:
 				setvoltage = setvoltage + (0.01 * i);
 				break;
-			case 0x20:
+			case 0x02:
 				setvoltage = setvoltage + (0.1 * i);
 				break;
-			case 0x40:
+			case 0x04:
 				setvoltage = setvoltage + i;
 				break;
-			case 0x80:
+			case 0x08:
 				setvoltage = setvoltage + (10*i);
 				break;
 			default:
@@ -477,8 +532,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení krok encoderu
 		{
 			setcurrent = 0;
 		}
+		if(setcurrent > 3)
+		{
+			setcurrent = 3;
+		}
 		debounce[4] = 10;
 		}
+	}
 	}
 }
 /* USER CODE END 0 */
@@ -543,7 +603,7 @@ int main(void)
 					setmodeflag = 750;
 					break;
 				default:
-					drawmenu1(cursor, 0, setvoltage , setcurrent);
+					drawmenu1(cursor, 0, setcurrent , setvoltage);
 					break;
 			}
 		  }
@@ -563,20 +623,21 @@ int main(void)
 		  {
 			 menupage = 0;
 			 setVout(setvoltage);
+			 setIout(setcurrent);
 		  }
 		  HAL_Delay(2);
 	  }
 	  else
 	  {
 		  // není v setmode
-		  rozdilchI = Im - (ADCtoVoltage(ADCout[0])*2);  // Aktualní - nová hodnota
-		  if((rozdilchI > 0.01)||(rozdilchI < -0.01))
+		  rozdilchI = Im - (ADCtoVoltage(ADCout[0]));  // Aktualní - nová hodnota
+		  if((rozdilchI > 0.02)||(rozdilchI < -0.02))
 		  {
-			  Im = (ADCtoVoltage(ADCout[0])*2);
+			  Im = ADCtoVoltage(ADCout[0]);
 			  refreshflag |= 0x01;
 		  }
 		  rozdilchU = Um - ((ADCtoVoltage(ADCout[1])*2)-(ADCtoVoltage(ADCout[2])*2)); // Aktualní - nová hodnota
-		  if((rozdilchU > 0.01)||(rozdilchU < -0.01))
+		  if((rozdilchU > 0.02)||(rozdilchU < -0.02))
 		  {
 			  Um = (ADCtoVoltage(ADCout[1])*2)-(ADCtoVoltage(ADCout[2])*2);
 			  setVout(setvoltage);
@@ -584,7 +645,7 @@ int main(void)
 		  }
 		  if(refreshflag > 0)  // pokud je příznak změny údajů na display obnoví display
 		  {
-			  drawmenu1(0, 1, Im , setvoltage);
+			  drawmenu1(0, 1, Im , Um);
 		  }
 	  }
 	  teplota = Voltagetoteperatur(ADCtoVoltage(ADCout[3]));
@@ -860,7 +921,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
@@ -883,8 +944,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB2 PB13 PB14 PB15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+  /*Configure GPIO pins : PB12 PB13 PB14 PB15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
