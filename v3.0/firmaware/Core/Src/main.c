@@ -119,6 +119,17 @@ void error(uint8_t event)
 				HAL_Delay(1);
 			}
 			break;
+		case 1:
+			SSD1306_GotoXY (3,25);
+			SSD1306_Puts("prehrati", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			break;
 		default:
 			break;
 	}
@@ -428,6 +439,11 @@ void ventilator(float temp)  //nastavení úrovně PWM ventilátoru
 	{
 		error(0);
 	}
+	if(teplota > 70)
+	{
+		error(1);
+	}
+
 	//hystereze
 	if(temp > 30)
 	{
@@ -479,10 +495,18 @@ void setIout(float proud)
 	setDAC2(output);
 }
 
+void start()
+{
+	SSD1306_Clear();
+	SSD1306_GotoXY (25,25);
+	SSD1306_Puts("zdrojOS", &Font_11x18, 1);
+	SSD1306_UpdateScreen();
+	HAL_Delay(1000);
+}
 
 //vektory přerušení
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení krok encoderu
+ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)  //přerušení krok encoderu
 {
 	uint8_t direct = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1);
 	if(GPIO_Pin == GPIO_PIN_0)
@@ -580,7 +604,7 @@ int main(void)
   SSD1306_Init();
   HAL_ADC_Start_DMA(&hadc1, ADCout, 4);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  drawmenu1(pointer_p1, 0,0, 0);
+  start();
   /* USER CODE END 2 */
 
   /* Infinite loop */
