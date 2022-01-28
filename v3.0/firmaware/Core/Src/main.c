@@ -99,6 +99,18 @@ uint8_t dataBUCK[16] = {0, 1, 2, 4, 3, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14, 15};
 uint16_t ventilatorper = 0;  //výkon ventilátoru v %
 uint8_t ventilatorhyst = 0;	//hystereze ventilatoru
 
+//start
+void start()
+{
+	SSD1306_Clear();
+	SSD1306_GotoXY (25,25);
+	SSD1306_Puts("zdrojOS", &Font_11x18, 1);
+	SSD1306_UpdateScreen();
+	HAL_Delay(1000);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
+}
+
 //error
 void error(uint8_t event)
 {
@@ -118,6 +130,7 @@ void error(uint8_t event)
 			{
 				HAL_Delay(1);
 			}
+			start();
 			break;
 		case 1:
 			SSD1306_GotoXY (3,25);
@@ -129,6 +142,7 @@ void error(uint8_t event)
 			{
 				HAL_Delay(1);
 			}
+			start();
 			break;
 		default:
 			break;
@@ -482,11 +496,24 @@ void setDAC2 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 n
 }
 void setVout (float napeti)	 //řízení spínaného napěťového regulátoru  + příprava pro ADC
 {
-	if(napeti < 2.5)
+	uint8_t i = 1;
+	if(napeti>21.12)
 	{
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, 1);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
+	}else{
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
+		while(napetiBUCK[i-1]<napeti)
+		{
+			i++;
+		}
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, (dataBUCK[i] & 0x01));
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, (dataBUCK[i] & 0x02));
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, (dataBUCK[i] & 0x04));
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, (dataBUCK[i] & 0x08));
 	}
-	setDAC1((napeti+(ADCtoVoltage(ADCout[2])*2)*4095)/Uadc);
+	setDAC1((napeti+(ADCtoVoltage(ADCout[2])*2)*4096)/Uadc);
 }
 void setIout(float proud)
 {
@@ -495,14 +522,7 @@ void setIout(float proud)
 	setDAC2(output);
 }
 
-void start()
-{
-	SSD1306_Clear();
-	SSD1306_GotoXY (25,25);
-	SSD1306_Puts("zdrojOS", &Font_11x18, 1);
-	SSD1306_UpdateScreen();
-	HAL_Delay(1000);
-}
+
 
 //vektory přerušení
 
