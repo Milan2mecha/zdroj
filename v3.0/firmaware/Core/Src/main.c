@@ -68,8 +68,9 @@ static void MX_TIM2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-float Im = 0;
-float Um = 0;
+float Uzobrazene = 0;
+float Izobrazene = 0;
+float Mzobrazene = 0;
 float teplota = 0;
 uint8_t dataDAC [3] = {0x40, 0x0, 0x0};
 uint32_t ADCout [4];
@@ -92,7 +93,7 @@ uint8_t pointer_p1 = 0x01;
 //servisní veličiny
 float Uadc = 3.28;		//vstupní napětí ADC
 float offset = 0.0;		//offset ADC
-float napetiBUCK[16] = {0, 1.68, 2.50, 4.28, 4.95, 6.74, 5.55, 10.01, 10.34, 12.80, 13.62, 15.40, 16.07, 17.85, 18.67, 21.13};
+float napetiBUCK[16] = {0, 1.68, 2.50, 4.28, 4.95, 6.74, 7.55, 10.01, 10.34, 12.80, 13.62, 15.40, 16.07, 17.85, 18.67, 21.13};
 uint8_t dataBUCK[16] = {0, 1, 2, 4, 3, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14, 15};
 
 //chlazení
@@ -418,7 +419,7 @@ void drawmenu2()
 	char ventc [2];
 	itoa(temp, tempc, 10);
 	itoa(ventilatorper, ventc, 10);
-	pz = Im * Um;
+	pz = Uzobrazene* Izobrazene;
 	itoa(pz, pzc, 10);
 	SSD1306_Clear();
 	SSD1306_GotoXY (10,3);
@@ -504,7 +505,7 @@ void setVout (float napeti)	 //řízení spínaného napěťového regulátoru  
 	}else{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
-		while(napetiBUCK[i-1]<napeti)
+		while(napetiBUCK[i]<napeti)
 		{
 			i++;
 		}
@@ -631,8 +632,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  float rozdilchI = 0;
-	  float rozdilchU = 0;
 	  uint8_t refreshflag = 0;
 
 
@@ -674,22 +673,38 @@ int main(void)
 	  else
 	  {
 		  // není v setmode
-		  rozdilchI = Im - (ADCtoVoltage(ADCout[0]));  // Aktualní - nová hodnota
-		  if((rozdilchI > 0.02)||(rozdilchI < -0.02))
+		  static uint8_t rezim = 0;
+		  static float U0 = 0;
+		  float U1 = 0;
+		  float U2 = 0;
+		  U0 = ADCtoVoltage(ADCout[0]);
+		  U1 = ADCtoVoltage(ADCout[1])*8;
+		  U2 = ADCtoVoltage(ADCout[2])*8;
+		  if(U2>2.5)
 		  {
-			  Im = ADCtoVoltage(ADCout[0]);
-			  refreshflag |= 0x01;
+			  rezim = 2;
+
 		  }
-		  rozdilchU = Um - ((ADCtoVoltage(ADCout[1])*2)-(ADCtoVoltage(ADCout[2])*2)); // Aktualní - nová hodnota
-		  if((rozdilchU > 0.02)||(rozdilchU < -0.02))
+		  else
 		  {
-			  Um = (ADCtoVoltage(ADCout[1])*2)-(ADCtoVoltage(ADCout[2])*2);
-			  setVout(setvoltage);
-			  refreshflag |= 0x01;
+			  rezim = 1;
+			  if(((setvoltage - (U1-U2)) > 0.05) | ((setvoltage - (U1-U2)) < -0.05))
+				{
+				  setVout(setvoltage+U2);
+				}
 		  }
+		  if(((Uzobrazene - (U1-U2))>0.02) | ((Uzobrazene - (U1-U2)) < -0.02))
+		  {refreshflag = 1;}
+		  if(((Uzobrazene - U0)>0.02) | ((Uzobrazene - U0) < -0.02))
+		  {refreshflag = 1;}
+		  if(rezim != Mzobrazene)
+		  {refreshflag = 1;}
 		  if(refreshflag > 0)  // pokud je příznak změny údajů na display obnoví display
 		  {
-			  drawmenu1(0, 1, Im , Um);
+			  Mzobrazene = rezim;
+			  Uzobrazene = U1-U2;
+			  Izobrazene = U0;
+			  drawmenu1(0, Mzobrazene, Izobrazene , Uzobrazene);
 		  }
 	  }
 	  teplota = Voltagetoteperatur(ADCtoVoltage(ADCout[3]));
