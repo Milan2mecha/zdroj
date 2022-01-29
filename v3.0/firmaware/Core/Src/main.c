@@ -120,9 +120,9 @@ void error(uint8_t event)
 	SSD1306_Clear();
 	SSD1306_GotoXY (3,3);
 	SSD1306_Puts("error:", &Font_11x18, 1);
+	SSD1306_GotoXY (3,25);
 	switch (event) {
 		case 0:
-			SSD1306_GotoXY (3,25);
 			SSD1306_Puts("mereni tep.", &Font_11x18, 1);
 			SSD1306_GotoXY (3,45);
 			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
@@ -134,8 +134,40 @@ void error(uint8_t event)
 			start();
 			break;
 		case 1:
-			SSD1306_GotoXY (3,25);
 			SSD1306_Puts("prehrati", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			start();
+			break;
+		case 2:
+			SSD1306_Puts("chyba U0", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			start();
+			break;
+		case 3:
+			SSD1306_Puts("chyba U1", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			start();
+			break;
+		case 4:
+			SSD1306_Puts("chyba U3", &Font_11x18, 1);
 			SSD1306_GotoXY (3,45);
 			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
 			SSD1306_UpdateScreen();
@@ -147,6 +179,7 @@ void error(uint8_t event)
 			break;
 		default:
 			break;
+
 	}
 }
 
@@ -595,7 +628,7 @@ void setIout(float proud)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	uint8_t refreshflag = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -632,7 +665,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uint8_t refreshflag = 0;
+
 
 
 	  readbuttons();
@@ -667,14 +700,15 @@ int main(void)
 			 menupage = 0;
 			 setVout(setvoltage);
 			 setIout(setcurrent);
+			 refreshflag = 1;
 		  }
 		  HAL_Delay(2);
 	  }
 	  else
 	  {
 		  // není v setmode
-		  static uint8_t rezim = 0;
-		  static float U0 = 0;
+		  uint8_t rezim = 0;
+		  float U0 = 0;
 		  float U1 = 0;
 		  float U2 = 0;
 		  U0 = ADCtoVoltage(ADCout[0]);
@@ -693,6 +727,18 @@ int main(void)
 				  setVout(setvoltage+U2);
 				}
 		  }
+		  if(U0>3)
+		  {
+			  error(2);
+		  }
+		  if(U1>3)
+		  {
+			  error(3);
+		  }
+		  if(U2>3)
+		  {
+			  error(4);
+		  }
 		  if(((Uzobrazene - (U1-U2))>0.02) | ((Uzobrazene - (U1-U2)) < -0.02))
 		  {refreshflag = 1;}
 		  if(((Uzobrazene - U0)>0.02) | ((Uzobrazene - U0) < -0.02))
@@ -705,6 +751,7 @@ int main(void)
 			  Uzobrazene = U1-U2;
 			  Izobrazene = U0;
 			  drawmenu1(0, Mzobrazene, Izobrazene , Uzobrazene);
+			  refreshflag = 0;
 		  }
 	  }
 	  teplota = Voltagetoteperatur(ADCtoVoltage(ADCout[3]));
