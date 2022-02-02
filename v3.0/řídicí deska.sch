@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.7.0">
+<eagle version="9.5.1">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -994,7 +994,7 @@ Operational amplifiers,  comparators, voltage regulators, ADCs, DACs, etc.&lt;p&
 <rectangle x1="-2.7178" y1="-5.1562" x2="-1.8542" y2="-2.2606" layer="51"/>
 <rectangle x1="1.8542" y1="-5.1562" x2="2.7178" y2="-2.2606" layer="51"/>
 <rectangle x1="-0.4318" y1="-3.0226" x2="0.4318" y2="-2.2606" layer="21"/>
-<polygon width="0.1998" layer="51" pour="solid">
+<polygon width="0.1998" layer="51">
 <vertex x="-2.5654" y="3.937"/>
 <vertex x="2.5654" y="3.937"/>
 <vertex x="2.5654" y="4.648203125"/>
@@ -10000,12 +10000,12 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <pin name="S" x="2.54" y="-5.08" visible="off" length="short" direction="pas" rot="R90"/>
 <pin name="G" x="-2.54" y="-2.54" visible="off" length="short" direction="pas"/>
 <pin name="D" x="2.54" y="5.08" visible="off" length="short" direction="pas" rot="R270"/>
-<polygon width="0.1524" layer="94" pour="solid">
+<polygon width="0.1524" layer="94">
 <vertex x="3.302" y="-0.254"/>
 <vertex x="4.318" y="-0.254"/>
 <vertex x="3.81" y="0.508003125"/>
 </polygon>
-<polygon width="0.1524" layer="94" pour="solid">
+<polygon width="0.1524" layer="94">
 <vertex x="1.015996875" y="0"/>
 <vertex x="2.032" y="-0.761996875"/>
 <vertex x="2.032" y="0.761996875"/>
@@ -10743,9 +10743,9 @@ regulátoru</text>
 <instance part="+3V3" gate="G$1" x="180.34" y="38.1" smashed="yes">
 <attribute name="VALUE" x="182.88" y="40.64" size="1.778" layer="96" rot="R180"/>
 </instance>
-<instance part="Q3" gate="G$1" x="180.34" y="76.2" smashed="yes" rot="R180">
-<attribute name="NAME" x="172.72" y="78.74" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="172.72" y="76.2" size="1.778" layer="96" rot="R180"/>
+<instance part="Q3" gate="G$1" x="180.34" y="76.2" smashed="yes" rot="MR0">
+<attribute name="NAME" x="172.72" y="73.66" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="172.72" y="76.2" size="1.778" layer="96" rot="MR0"/>
 </instance>
 <instance part="GND13" gate="1" x="177.8" y="60.96" smashed="yes">
 <attribute name="VALUE" x="175.26" y="58.42" size="1.778" layer="96"/>
@@ -10908,11 +10908,6 @@ regulátoru</text>
 <wire x1="180.34" y1="7.62" x2="180.34" y2="12.7" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="GND13" gate="1" pin="GND"/>
-<wire x1="177.8" y1="63.5" x2="177.8" y2="71.12" width="0.1524" layer="91"/>
-<pinref part="Q3" gate="G$1" pin="D"/>
-</segment>
-<segment>
 <pinref part="GND14" gate="1" pin="GND"/>
 <wire x1="7.62" y1="7.62" x2="7.62" y2="12.7" width="0.1524" layer="91"/>
 <wire x1="7.62" y1="12.7" x2="15.24" y2="12.7" width="0.1524" layer="91"/>
@@ -10952,6 +10947,11 @@ regulátoru</text>
 <wire x1="139.7" y1="15.24" x2="139.7" y2="27.94" width="0.1524" layer="91"/>
 <wire x1="139.7" y1="27.94" x2="129.54" y2="27.94" width="0.1524" layer="91"/>
 <pinref part="U$2" gate="G$1" pin="WC"/>
+</segment>
+<segment>
+<pinref part="GND13" gate="1" pin="GND"/>
+<pinref part="Q3" gate="G$1" pin="S"/>
+<wire x1="177.8" y1="63.5" x2="177.8" y2="71.12" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="+3V3" class="0">
@@ -11188,17 +11188,17 @@ regulátoru</text>
 <label x="30.48" y="162.56" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="190.5" y1="78.74" x2="182.88" y2="78.74" width="0.1524" layer="91"/>
+<wire x1="190.5" y1="73.66" x2="182.88" y2="73.66" width="0.1524" layer="91"/>
 <pinref part="Q3" gate="G$1" pin="G"/>
-<label x="185.42" y="78.74" size="1.778" layer="95"/>
+<label x="185.42" y="73.66" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="N$5" class="0">
 <segment>
-<wire x1="177.8" y1="81.28" x2="177.8" y2="88.9" width="0.1524" layer="91"/>
 <wire x1="177.8" y1="88.9" x2="185.42" y2="88.9" width="0.1524" layer="91"/>
 <pinref part="JP5" gate="G$1" pin="2"/>
-<pinref part="Q3" gate="G$1" pin="S"/>
+<pinref part="Q3" gate="G$1" pin="D"/>
+<wire x1="177.8" y1="81.28" x2="177.8" y2="88.9" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$6" class="0">
