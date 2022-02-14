@@ -93,7 +93,7 @@ uint8_t pointer_p1 = 0x01;
 //servisní veličiny
 float Uadc = 3.28;		//vstupní napětí ADC
 float offset = 0.0;		//offset ADC
-float napetiBUCK[16] = {0, 1.68, 2.50, 4.28, 4.95, 6.74, 7.55, 10.01, 10.34, 12.80, 13.62, 15.40, 16.07, 17.85, 18.67, 21.13};
+float napetiBUCK[16] = {0, 0, 0.79, 2.40, 3.52, 5.10, 5.90, 8.50, 8.80, 11.30, 12.20, 14.37, 14.97, 16.63, 17.40, 18.71};
 uint8_t dataBUCK[16] = {0, 1, 2, 4, 3, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14, 15};
 
 //chlazení
