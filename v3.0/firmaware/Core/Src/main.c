@@ -91,7 +91,7 @@ float setcurrent = 0;
 uint8_t pointer_p1 = 0x01;
 
 //servisní veličiny
-float Uadc = 3.28;		//vstupní napětí ADC
+float Uadc = 3.3;		//vstupní napětí ADC
 float offset = 0.0;		//offset ADC
 float napetiBUCK[16] = {0, 0, 0.79, 2.40, 3.52, 5.10, 5.90, 8.50, 8.80, 11.30, 12.20, 14.37, 14.97, 16.63, 17.40, 18.71};
 uint8_t dataBUCK[16] = {0, 1, 2, 4, 3, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14, 15};
@@ -530,8 +530,9 @@ void setDAC2 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 n
 }
 void setVout (float napeti)	 //řízení spínaného napěťového regulátoru  + příprava pro ADC
 {
+	uint16_t output;
 	uint8_t i = 1;
-	if(napeti>21.12)
+	if(napeti>18.71)
 	{
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 1);
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
@@ -542,18 +543,19 @@ void setVout (float napeti)	 //řízení spínaného napěťového regulátoru  
 		{
 			i++;
 		}
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, (dataBUCK[i] & 0x01));
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, (dataBUCK[i] & 0x02));
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, (dataBUCK[i] & 0x04));
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, (dataBUCK[i] & 0x08));
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, (1&&(dataBUCK[i] & 0x08)));
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, (1&&(dataBUCK[i] & 0x04)));
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, (dataBUCK[i] & 0x02));
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, (dataBUCK[i] & 0x01));
 	}
-	setDAC1((napeti+(ADCtoVoltage(ADCout[2])*2)*4096)/Uadc);
+	output = (napeti*512)/Uadc;
+	setDAC2(output);
 }
 void setIout(float proud)
 {
 	uint16_t output;
 	output = (proud*4095)/Uadc;
-	setDAC2(output);
+	setDAC1(output);
 }
 
 
@@ -711,10 +713,10 @@ int main(void)
 		  float U0 = 0;
 		  float U1 = 0;
 		  float U2 = 0;
-		  U0 = ADCtoVoltage(ADCout[0]);
+		  U0 = ADCtoVoltage(ADCout[0])*8;
 		  U1 = ADCtoVoltage(ADCout[1])*8;
-		  U2 = ADCtoVoltage(ADCout[2])*8;
-		  if(U2>2.5)
+		  U2 = ADCtoVoltage(ADCout[2]);
+		  if(U1>2.5)
 		  {
 			  rezim = 2;
 
@@ -722,16 +724,16 @@ int main(void)
 		  else
 		  {
 			  rezim = 1;
-			  if(((setvoltage - (U1-U2)) > 0.05) | ((setvoltage - (U1-U2)) < -0.05))
+			  if(((setvoltage - (U0-U1)) > 0.05) | ((setvoltage - (U0-U1)) < -0.05))
 				{
-				  setVout(setvoltage+U2);
+				  setVout(setvoltage+U1);
 				}
 		  }
-		  if(U0>3)
+		  if(U0>24)
 		  {
 			  error(2);
 		  }
-		  if(U1>3)
+		  if(U1>24)
 		  {
 			  error(3);
 		  }
@@ -739,17 +741,17 @@ int main(void)
 		  {
 			  error(4);
 		  }
-		  if(((Uzobrazene - (U1-U2))>0.02) | ((Uzobrazene - (U1-U2)) < -0.02))
+		  if(((Uzobrazene - (U0-U1))>0.02) | ((Uzobrazene - (U0-U1)) < -0.02))
 		  {refreshflag = 1;}
-		  if(((Uzobrazene - U0)>0.02) | ((Uzobrazene - U0) < -0.02))
+		  if(((Izobrazene - U2)>0.02) | ((Izobrazene - U2) < -0.02))
 		  {refreshflag = 1;}
 		  if(rezim != Mzobrazene)
 		  {refreshflag = 1;}
 		  if(refreshflag > 0)  // pokud je příznak změny údajů na display obnoví display
 		  {
 			  Mzobrazene = rezim;
-			  Uzobrazene = U1-U2;
-			  Izobrazene = U0;
+			  Uzobrazene = U0-U1;
+			  Izobrazene = U2;
 			  drawmenu1(0, Mzobrazene, Izobrazene , Uzobrazene);
 			  refreshflag = 0;
 		  }
