@@ -293,7 +293,7 @@ void readbuttons()	//pulling tlačítek
 			  }
 			  setmodeflag = 500;
 			  debounce[3] = 10;
-			  if(menupage>1)
+			  if(menupage>2)
 			  {
 				  menupage = 0;
 				  setmodeflag = 10;
@@ -476,7 +476,30 @@ void drawmenu2()
 	SSD1306_UpdateScreen(); // update screen
 
 }
+void drawmenu3()
+{
+	char U0c [3];
+	char U1c [3];
+	char U2c [3];
+	itoa(ADCout[0], U0c, 10);
+	itoa(ADCout[1], U1c, 10);
+	itoa(ADCout[2], U2c, 10);
+	SSD1306_Clear();
+	SSD1306_GotoXY (10,3);
+	SSD1306_Puts("U0 =", &Font_11x18, 1);
+	SSD1306_GotoXY (65,3);
+	SSD1306_Puts(U0c, &Font_11x18, 1);
+	SSD1306_GotoXY (10,25);
+	SSD1306_Puts("U1=", &Font_11x18, 1);
+	SSD1306_GotoXY (65,25);
+	SSD1306_Puts(U1c, &Font_11x18, 1);
+	SSD1306_GotoXY (10,43);
+	SSD1306_Puts("U2=", &Font_11x18, 1);
+	SSD1306_GotoXY (65, 43);
+	SSD1306_Puts(U2c, &Font_11x18, 1);
+	SSD1306_UpdateScreen(); // update screen
 
+}
 
 // výstupní elektrické veličiny
 
@@ -520,13 +543,13 @@ void setDAC1 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 n
 {
 	dataDAC [1] = (data >> 4);
 	dataDAC [2] = (data << 4) & 0xf0;
-	HAL_I2C_Master_Transmit(&hi2c2, (0b1100001<<1), dataDAC, 3, 10);
+	HAL_I2C_Master_Transmit(&hi2c1, (0b1100001<<1), dataDAC, 3, 10);
 }
 void setDAC2 (uint16_t data) // zapíše vpravo zarovnaná 12-bit data do DAC1 na I2C2
 {
 	dataDAC [1] = (data >> 4);
 	dataDAC [2] = (data << 4) & 0xf0;
-	HAL_I2C_Master_Transmit(&hi2c1, (0b1100001<<1), dataDAC, 3, 10);
+	HAL_I2C_Master_Transmit(&hi2c2, (0b1100001<<1), dataDAC, 3, 10);
 }
 void setVout (float napeti)	 //řízení spínaného napěťového regulátoru  + příprava pro ADC
 {
@@ -680,6 +703,10 @@ int main(void)
 					drawmenu2();
 					setmodeflag = 750;
 					break;
+				case 2:
+					drawmenu3();
+					setmodeflag = 750;
+					break;
 				default:
 					drawmenu1(cursor, 0, setcurrent , setvoltage);
 					break;
@@ -716,7 +743,7 @@ int main(void)
 		  U0 = ADCtoVoltage(ADCout[0])*8;
 		  U1 = ADCtoVoltage(ADCout[1])*8;
 		  U2 = ADCtoVoltage(ADCout[2]);
-		  if(U1>2.5)
+		  if(U1>2)
 		  {
 			  rezim = 2;
 
@@ -846,7 +873,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_71CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
