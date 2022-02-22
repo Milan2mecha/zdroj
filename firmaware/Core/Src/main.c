@@ -346,7 +346,14 @@ char* trimm(float f)
 float ADCtoVoltage(uint16_t ADCvalue)
 {
 	float voltage = 0;
-	voltage = ((ADCvalue*Uadc)/4095) + offset;
+	if(ADCvalue >= 161)
+	{
+		voltage = (ADCvalue/1226.9938)+0.0693;
+	}
+	else
+	{
+		voltage = ADCvalue/365;
+	}
 	return voltage;
 }
 float Voltagetoteperatur(float napeti)
@@ -768,7 +775,7 @@ int main(void)
 		  {
 			  error(4);
 		  }
-		  if(((Uzobrazene - (U0-U1))>0.02) | ((Uzobrazene - (U0-U1)) < -0.02))
+		  if(((Uzobrazene - (U0-U1))>0.05) | ((Uzobrazene - (U0-U1)) < -0.05))
 		  {refreshflag = 1;}
 		  if(((Izobrazene - U2)>0.02) | ((Izobrazene - U2) < -0.02))
 		  {refreshflag = 1;}
