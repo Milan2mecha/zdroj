@@ -74,7 +74,9 @@ float Mzobrazene = 0;
 float teplota = 0;
 uint8_t dataDAC [3] = {0x40, 0x0, 0x0};
 uint32_t ADCout [4];
-
+float SMAU1 [50];
+float SMAU2 [50];
+uint8_t SMAy = 0;
 //mód zobrazení
 uint16_t setmodeflag = 0;
 
@@ -99,7 +101,6 @@ uint8_t dataBUCK[16] = {0, 1, 2, 4, 3, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14, 15};
 //chlazení
 uint16_t ventilatorper = 0;  //výkon ventilátoru v %
 uint8_t ventilatorhyst = 0;	//hystereze ventilatoru
-
 //start
 void start()
 {
@@ -182,6 +183,7 @@ void error(uint8_t event)
 
 	}
 }
+
 
 
 
@@ -691,7 +693,13 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, ADCout, 4);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   start();
-  /* USER CODE END 2 */
+  for(uint8_t y; y<50;y++)
+  {
+	  SMAU1 [y] = ADCtoVoltage(ADCout[1])*8;
+	  SMAU2 [y] = ADCtoVoltage(ADCout[2]);
+	  HAL_Delay(2);
+  }
+	/* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -744,12 +752,24 @@ int main(void)
 	  {
 		  // není v setmode
 		  uint8_t rezim = 0;
+		  SMAy++;
+		  if(SMAy > 49)
+		  {
+			  SMAy = 0;
+		  }
 		  float U0 = 0;
 		  float U1 = 0;
 		  float U2 = 0;
 		  U0 = ADCtoVoltage(ADCout[0])*8;
-		  U1 = ADCtoVoltage(ADCout[1])*8;
-		  U2 = ADCtoVoltage(ADCout[2]);
+		  SMAU1[SMAy] = ADCtoVoltage(ADCout[1])*8;
+		  SMAU2[SMAy] = ADCtoVoltage(ADCout[2]);
+		  for(uint8_t y = 0; y<49; y++)
+		  {
+			  U1 = U1 + SMAU1[y];
+			  U2 = U2 + SMAU2[y];
+		  }
+		  U1 = U1 / 50;
+		  U2 = U2 / 50;
 		  if(U1>2)
 		  {
 			  rezim = 2;
@@ -789,6 +809,7 @@ int main(void)
 			  drawmenu1(0, Mzobrazene, Izobrazene , Uzobrazene);
 			  refreshflag = 0;
 		  }
+		  HAL_Delay(2);
 	  }
 	  teplota = Voltagetoteperatur(ADCtoVoltage(ADCout[3]));
 	  ventilator(teplota);
