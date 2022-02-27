@@ -14441,6 +14441,7 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <wire x1="5.08" y1="266.7" x2="210.82" y2="266.7" width="0.1524" layer="97"/>
 <wire x1="210.82" y1="266.7" x2="210.82" y2="256.54" width="0.1524" layer="97"/>
 <text x="60.96" y="259.08" size="5.08" layer="97">Deska lineárních regulátorů</text>
+<text x="195.58" y="60.96" size="6.4516" layer="97">-</text>
 </plain>
 <instances>
 <instance part="IC1" gate="B" x="93.98" y="157.48" smashed="yes">
@@ -14451,9 +14452,9 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <instance part="-" gate="-1" x="190.5" y="63.5" smashed="yes" rot="R180">
 <attribute name="NAME" x="191.77" y="62.611" size="1.778" layer="95"/>
 </instance>
-<instance part="-" gate="-2" x="180.34" y="83.82" smashed="yes" rot="R270">
-<attribute name="NAME" x="181.229" y="85.09" size="1.778" layer="95" rot="R90"/>
-<attribute name="VALUE" x="176.657" y="87.63" size="1.778" layer="96" rot="R270"/>
+<instance part="-" gate="-2" x="190.5" y="81.28" smashed="yes" rot="R180">
+<attribute name="NAME" x="191.77" y="80.391" size="1.778" layer="95"/>
+<attribute name="VALUE" x="194.31" y="84.963" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="GND1" gate="1" x="162.56" y="17.78" smashed="yes">
 <attribute name="VALUE" x="160.02" y="15.24" size="1.778" layer="96"/>
@@ -14852,8 +14853,9 @@ BF959 corrected 2008.03.06&lt;br&gt;</description>
 <segment>
 <pinref part="-" gate="-2" pin="KL"/>
 <pinref part="D1" gate="G$1" pin="C"/>
-<wire x1="180.34" y1="73.66" x2="180.34" y2="78.74" width="0.1524" layer="91"/>
-<label x="175.26" y="76.2" size="3.81" layer="95"/>
+<label x="195.58" y="78.74" size="3.81" layer="95"/>
+<wire x1="180.34" y1="73.66" x2="180.34" y2="81.28" width="0.1524" layer="91"/>
+<wire x1="180.34" y1="81.28" x2="185.42" y2="81.28" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="SCL" class="0">
