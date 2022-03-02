@@ -74,6 +74,7 @@ float Mzobrazene = 0;
 float teplota = 0;
 uint8_t dataDAC [3] = {0x40, 0x0, 0x0};
 uint32_t ADCout [4];
+float SMAU0 [50];
 float SMAU1 [50];
 float SMAU2 [50];
 uint8_t SMAy = 0;
@@ -354,7 +355,8 @@ float ADCtoVoltage(uint16_t ADCvalue)
 	}
 	else
 	{
-		voltage = ADCvalue/365;
+		voltage = ADCvalue;
+		voltage = voltage/365;
 	}
 	return voltage;
 }
@@ -456,9 +458,9 @@ void drawmenu2()
 {
 	uint16_t pz = 0;
 	uint16_t temp = teplota;
-	char pzc [2];
-	char tempc [2];
-	char ventc [2];
+	char pzc [3];
+	char tempc [3];
+	char ventc [3];
 	itoa(temp, tempc, 10);
 	itoa(ventilatorper, ventc, 10);
 	pz = Uzobrazene* Izobrazene;
@@ -644,9 +646,13 @@ void setIout(float proud)
 		{
 			setcurrent = 0;
 		}
-		if(setcurrent > 3)
+		if(setcurrent > 2.6)
 		{
-			setcurrent = 3;
+			setcurrent = 2.6;
+		}
+		if(setvoltage > 18)
+		{
+			setcurrent = 18;
 		}
 		debounce[4] = 10;
 		}
@@ -695,6 +701,7 @@ int main(void)
   start();
   for(uint8_t y; y<50;y++)
   {
+	  SMAU0 [y] = ADCtoVoltage(ADCout[0])*8;
 	  SMAU1 [y] = ADCtoVoltage(ADCout[1])*8;
 	  SMAU2 [y] = ADCtoVoltage(ADCout[2]);
 	  HAL_Delay(2);
@@ -760,14 +767,17 @@ int main(void)
 		  float U0 = 0;
 		  float U1 = 0;
 		  float U2 = 0;
-		  U0 = ADCtoVoltage(ADCout[0])*8;
+		  SMAU0[SMAy] = ADCtoVoltage(ADCout[0])*8;
 		  SMAU1[SMAy] = ADCtoVoltage(ADCout[1])*8;
 		  SMAU2[SMAy] = ADCtoVoltage(ADCout[2]);
-		  for(uint8_t y = 0; y<49; y++)
+		  for(uint8_t y = 0; y<50; y++)
 		  {
+			  U0 = U0 + SMAU0[y];
 			  U1 = U1 + SMAU1[y];
 			  U2 = U2 + SMAU2[y];
+
 		  }
+		  U0 = U0 / 50;
 		  U1 = U1 / 50;
 		  U2 = U2 / 50;
 		  if(U1>2)
@@ -782,6 +792,17 @@ int main(void)
 				{
 				  setVout(setvoltage+U1);
 				}
+			 if(SMAy == 49)
+			  {
+				  if((setvoltage - (U0-U1)) > 0.1)
+				  {
+					  setVout((setvoltage+U1)+0.1);
+				  }
+				  if((setvoltage - (U0-U1)) < -0.1)
+				  {
+					  setVout((setvoltage+U1)-0.1);
+				  }
+			  }
 		  }
 		  if(U0>24)
 		  {
@@ -809,7 +830,7 @@ int main(void)
 			  drawmenu1(0, Mzobrazene, Izobrazene , Uzobrazene);
 			  refreshflag = 0;
 		  }
-		  HAL_Delay(2);
+		  HAL_Delay(1);
 	  }
 	  teplota = Voltagetoteperatur(ADCtoVoltage(ADCout[3]));
 	  ventilator(teplota);
