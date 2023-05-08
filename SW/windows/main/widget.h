@@ -18,7 +18,7 @@ public:
     ~Widget();
     void openSerialPort(QString);
     void closeSerialPort();
-    void readData();
+    QString * readData();
     void writeData(const QByteArray  &data);
 };
 

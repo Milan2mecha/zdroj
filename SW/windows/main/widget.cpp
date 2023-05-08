@@ -16,11 +16,35 @@
 #include <QSerialPortInfo>
 #include <QPushButton>
 #include <QDir>
+#include <QThread>
+
+
 
 QFont fontMain("Verdana", 40);
 QFont fontSecond("Verdana", 20);
 QFont fontThird("Verdana", 15);
 QFont fontFourth("Verdana", 10);
+
+
+QString Stylegreen_window = "background-color: #666666;"
+                            "color:#ffff99;"
+                            "border:5px solid #33CC00";
+QString Styleclassic_window = "background-color: #666666;"
+                              "color:#ffff99;"
+                              "border:1px solid #666666";
+
+
+void setError(int i)
+{
+    QString einfo [] = {"Couldn’t open COM port, check connection and try again.", "Kapavka syfilis no to už se hold stává", "Mrdám to tu jedu domů do Kerkonoš", "Jau, zase ten blbej malíček"};
+    QString etext [] = {"COM open error", "nemoc", "Dovolená", "uraz"};
+    QMessageBox *errmess = new QMessageBox;
+    errmess->setIcon(QMessageBox::Warning);
+    errmess->setInformativeText(einfo[i]); //dolní
+    errmess->setText(etext[i]);   //horní
+    errmess->exec();
+}
+
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent),
@@ -28,14 +52,20 @@ Widget::Widget(QWidget *parent)
 {
     setStyleSheet("background-color: #333333");
     QVBoxLayout *mainbox = new QVBoxLayout;
+
     QHBoxLayout *techhbox= new QHBoxLayout;
+
     QHBoxLayout *mnamehbox= new QHBoxLayout;
     QHBoxLayout *mvaluehbox= new QHBoxLayout;
+
+    QVBoxLayout *CVvbox = new QVBoxLayout;
+    QVBoxLayout *CCvbox = new QVBoxLayout;
+    QHBoxLayout *spinhbox = new QHBoxLayout;
+
     QVBoxLayout *vpbox = new QVBoxLayout;
     QVBoxLayout *vtbox= new QVBoxLayout;
     QVBoxLayout *vvbox= new QVBoxLayout;
-    QHBoxLayout *h4box = new QHBoxLayout;
-    QHBoxLayout *hbox= new QHBoxLayout;
+    QHBoxLayout *infohbox= new QHBoxLayout;
 
 
     //COM settings
@@ -83,8 +113,10 @@ Widget::Widget(QWidget *parent)
     mnamehbox->addWidget(volt);
 
 
+    QString *volts = new QString("00");
+    QString milivolts = "00";
     QLabel *voltdis = new QLabel;
-    voltdis->setText("00,00V");
+    voltdis->setText(QString("%1,%2V").arg(*volts, milivolts));
     voltdis->setFixedSize(250,80);
     voltdis->setStyleSheet("color:#66CCFF;"
                           "background-color: #666666");
@@ -110,13 +142,105 @@ Widget::Widget(QWidget *parent)
     currentdis->setAlignment(Qt::AlignCenter);
     mvaluehbox->addWidget(currentdis);
 
+    //CV
+    QLabel *CV= new QLabel("C.V.");
+    CV->setStyleSheet("color:#ffff99");
+    CV->setFont(fontSecond);
+    CV->setAlignment(Qt::AlignCenter);
+    CVvbox->addWidget(CV);
 
+    //nastavení C.V. double spin boxu
+    QDoubleSpinBox *CVspin = new QDoubleSpinBox;
+    CVspin->setRange(0,20);
+    CVspin->setDecimals(2);
+    CVspin->setSingleStep(0.05);
+    CVspin->setFixedSize(100,60);
+    CVspin->setStyleSheet(Styleclassic_window);
+    CVspin->setFont(fontSecond);
+    CVvbox->addWidget(CVspin);
+
+    CVvbox->setAlignment(Qt::AlignCenter);
+
+    //CC
+    QLabel *CC= new QLabel("C.C.");
+    CC->setStyleSheet("color:#ffff99");
+    CC->setFont(fontSecond);
+    CC->setAlignment(Qt::AlignCenter);
+    CCvbox->addWidget(CC);
+
+    //nastavení C.C. double spin boxu
+    QDoubleSpinBox *CCspin = new QDoubleSpinBox;
+    CCspin->setRange(0,2.5);
+    CCspin->setDecimals(2);
+    CCspin->setSingleStep(0.05);
+    CCspin->setFixedSize(100,60);
+    CCspin->setStyleSheet(Styleclassic_window);
+    CCspin->setFont(fontSecond);
+    CCvbox->addWidget(CCspin);
+
+    CCvbox->setAlignment(Qt::AlignCenter);
+
+    spinhbox->addLayout(CVvbox);
+    spinhbox->addLayout(CCvbox);
+
+    //power
+    QLabel *pow=new QLabel("Power");
+    pow->setStyleSheet("color:#ffff99");
+    pow->setFont(fontThird);
+    pow->setAlignment(Qt::AlignCenter);
+    QLabel *powerdis = new QLabel("0,00W");
+    powerdis->setStyleSheet(Styleclassic_window);
+    powerdis->setFont(fontSecond);
+    powerdis->setAlignment(Qt::AlignCenter);
+    vpbox->addWidget(pow);
+    vpbox->addWidget(powerdis);
+    infohbox->addLayout(vpbox);
+
+    //temp
+    QLabel *temp = new QLabel("Temperature");
+    temp->setStyleSheet("color:#ffff99");
+    temp->setFont(fontThird);
+    temp->setAlignment(Qt::AlignCenter);
+    QLabel *tempdis = new QLabel("0,00˚C");
+    tempdis->setStyleSheet(Styleclassic_window);
+    tempdis->setFont(fontSecond);
+    tempdis->setAlignment(Qt::AlignCenter);
+    vtbox->addWidget(temp);
+    vtbox->addWidget(tempdis);
+    infohbox->addLayout(vtbox);
+
+    //vent
+    QLabel *Vent = new QLabel("Cooling");
+    Vent->setStyleSheet("color:#ffff99");
+    Vent->setFont(fontThird);
+    Vent->setAlignment(Qt::AlignCenter);
+    QLabel *ventdis = new QLabel("50%");
+    ventdis->setStyleSheet(Styleclassic_window);
+    ventdis->setFont(fontSecond);
+    ventdis->setAlignment(Qt::AlignCenter);
+    vvbox->addWidget(Vent);
+    vvbox->addWidget(ventdis);
+    infohbox->addLayout(vvbox);
+
+    voltdis->setText("Hi!");
     //mainbox layout
     mainbox->addLayout(techhbox);
     mainbox->addLayout(mnamehbox);
     mainbox->addLayout(mvaluehbox);
+    mainbox->addLayout(spinhbox);
+    mainbox->addLayout(infohbox);
     setLayout(mainbox);
-
+    //QString *receved =  new QString;
+    QObject::connect(m_serial, &QSerialPort::readyRead,this, [this, &volts, &voltdis]() {
+        QString* mainstr;
+        mainstr = (Widget::readData());
+        voltdis->setText("Hi!");
+       //volts->clear();
+        //volts->clear();
+        //volts->append("21");
+        //milivolts = mainstr->mid(3,2);
+        //voltdis->setText("12,00V");
+    });
 
 }
 
@@ -125,7 +249,7 @@ void Widget::openSerialPort(QString name)
 {
 
     m_serial->setPortName(name);
-    m_serial->setBaudRate(9600);
+    m_serial->setBaudRate(115200);
     m_serial->setDataBits(QSerialPort::Data8);
     m_serial->setParity(QSerialPort::NoParity);
     m_serial->setStopBits(QSerialPort::OneStop);
@@ -136,7 +260,7 @@ void Widget::openSerialPort(QString name)
     } else {
         QMessageBox::critical(this, tr("Error"), m_serial->errorString());
 
-        qDebug()<<(tr("Open error"));
+        setError(1);
     }
 }
 
@@ -146,11 +270,87 @@ void Widget::closeSerialPort()
         m_serial->close();
 }
 
-void Widget::readData()
+int checkmess(QString input)
 {
-    const QByteArray data = m_serial->readAll();
-    qDebug("%s", data.constData());
+    for(int i = 1; i<5; i++)
+    {
+        if(input.at(i)>'9'||input.at(i)<'0'){
+            return(1);
+        }
+    }
+    if(input.at(5)!='|'){
+        return(1);
+    }
+    for (int i = 6; i < 10; i++) {
+        if(input.at(i)>'9'||input.at(i)<'0'){
+            return(1);
+        }
+    }
+    if(input.at(10)!='|'){
+        return(1);
+    }
+    if(input.at(11)!='C'&&input.at(11)!='V'){
+        return(1);
+    }
+    if(input.at(12)!='|'){
+        return(1);
+    }
+    for (int i = 13; i < 16; i++) {
+        if(input.at(i)>'9'||input.at(i)<'0'){
+            return(1);
+        }
+    }
+    if(input.at(16)!='|'){
+        return(1);
+    }
+    for (int i = 17; i < 19; i++) {
+        if(input.at(i)>'9'||input.at(i)<'0'){
+            return(1);
+        }
+    }
+    if(input.at(19)!='|'){
+        return(1);
+    }
+    if(input.at(20)!='E'){
+        return(1);
+    }
+    return(0);
 }
+
+QString * Widget::readData()
+{
+    static int err_count;
+    const QByteArray data = m_serial->readAll();
+    static QString *input = new QString;
+    if(input->size()>=21){
+        input->clear();
+    }
+    input->append(data.data());
+    if(input->at(0) != '$')
+    {
+        input->clear();
+        err_count++;
+    }
+
+    if(input->size() >= 21){
+        if(checkmess(*input)){
+            err_count++;
+            input->clear();
+        }else{
+            return input;
+        }
+    }
+    if(err_count >100){
+        setError(2);
+        err_count = 0;
+        Widget::closeSerialPort();
+
+    }
+    input->clear();
+    return input;
+}
+
+
 
 void Widget::writeData(const QByteArray &data)
 {
