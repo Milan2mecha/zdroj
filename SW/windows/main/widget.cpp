@@ -25,7 +25,6 @@ QFont fontSecond("Verdana", 20);
 QFont fontThird("Verdana", 15);
 QFont fontFourth("Verdana", 10);
 
-
 QString Stylegreen_window = "background-color: #666666;"
                             "color:#ffff99;"
                             "border:5px solid #33CC00";
@@ -113,10 +112,8 @@ Widget::Widget(QWidget *parent)
     mnamehbox->addWidget(volt);
 
 
-    QString *volts = new QString("00");
-    QString milivolts = "00";
-    QLabel *voltdis = new QLabel;
-    voltdis->setText(QString("%1,%2V").arg(*volts, milivolts));
+    voltdis = new QLabel;
+    voltdis->setText("00,00V");
     voltdis->setFixedSize(250,80);
     voltdis->setStyleSheet("color:#66CCFF;"
                           "background-color: #666666");
@@ -230,19 +227,26 @@ Widget::Widget(QWidget *parent)
     mainbox->addLayout(spinhbox);
     mainbox->addLayout(infohbox);
     setLayout(mainbox);
-    //QString *receved =  new QString;
-    QObject::connect(m_serial, &QSerialPort::readyRead,this, [this, &volts, &voltdis]() {
-        QString* mainstr;
+
+    QObject::connect(m_serial, &QSerialPort::readyRead, [&]() {
+        QString mainstr;
+        QString voltst;
         mainstr = (Widget::readData());
-        voltdis->setText("Hi!");
-       //volts->clear();
-        //volts->clear();
-        //volts->append("21");
-        //milivolts = mainstr->mid(3,2);
-        //voltdis->setText("12,00V");
+        qDebug()<<mainstr;
+        if(mainstr.at(1)=='0'){
+            voltst = mainstr.mid(2,1);
+        }else{
+            voltst = mainstr.mid(1,2);
+        }
+        voltst.append(",");
+        voltst.append(mainstr.mid(3,2));
+        voltst.append("V");
+        voltdis->setText(voltst);
+
     });
 
 }
+
 
 
 void Widget::openSerialPort(QString name)
@@ -317,25 +321,25 @@ int checkmess(QString input)
     return(0);
 }
 
-QString * Widget::readData()
+QString Widget::readData()
 {
     static int err_count;
     const QByteArray data = m_serial->readAll();
-    static QString *input = new QString;
-    if(input->size()>=21){
-        input->clear();
+    static QString input;
+    if(input.size()>=21){
+        input.clear();
     }
-    input->append(data.data());
-    if(input->at(0) != '$')
+    input.append(data.data());
+    if(input.at(0) != '$')
     {
-        input->clear();
+        input.clear();
         err_count++;
     }
 
-    if(input->size() >= 21){
-        if(checkmess(*input)){
+    if(input.size() >= 21){
+        if(checkmess(input)){
             err_count++;
-            input->clear();
+            input.clear();
         }else{
             return input;
         }
@@ -346,7 +350,7 @@ QString * Widget::readData()
         Widget::closeSerialPort();
 
     }
-    input->clear();
+    qDebug()<<input;
     return input;
 }
 

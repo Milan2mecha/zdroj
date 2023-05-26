@@ -20,6 +20,13 @@ int main(int argc, char *argv[])
         }
     }
     Widget w;
+    /*QObject::connect(w.m_serial, &QSerialPort::readyRead, [&]() {
+        //QString* mainstr;
+        //mainstr = (w.readData());
+        w.changevalue("25,32V");
+    });*/
+    //w.changevalue("25,32V");
     w.show();
+
     return a.exec();
 }

@@ -4,6 +4,7 @@
 
 #include <QWidget>
 #include <QtSerialPort/QSerialPort>
+#include <QLabel>
 
 
 class Widget : public QWidget
@@ -12,14 +13,19 @@ class Widget : public QWidget
     Q_OBJECT
 
 private:
-    QSerialPort *m_serial;
-public:
-    Widget(QWidget *parent = nullptr);
-    ~Widget();
+    QLabel *voltdis;
     void openSerialPort(QString);
     void closeSerialPort();
-    QString * readData();
+    QString readData();
     void writeData(const QByteArray  &data);
+    QSerialPort *m_serial;
+    QString* mainstr;
+public:
+
+    Widget(QWidget *parent = nullptr);
+
+    ~Widget();
+
 };
 
 #endif // WIDGET_H
