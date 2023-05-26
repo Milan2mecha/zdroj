@@ -13,7 +13,13 @@ class Widget : public QWidget
     Q_OBJECT
 
 private:
+    //grafické prvky
     QLabel *voltdis;
+    QLabel *currentdis;
+    QLabel *powerdis;
+    QLabel *tempdis;
+    QLabel *ventdis;
+
     void openSerialPort(QString);
     void closeSerialPort();
     QString readData();

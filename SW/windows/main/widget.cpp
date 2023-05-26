@@ -115,8 +115,7 @@ Widget::Widget(QWidget *parent)
     voltdis = new QLabel;
     voltdis->setText("00,00V");
     voltdis->setFixedSize(250,80);
-    voltdis->setStyleSheet("color:#66CCFF;"
-                          "background-color: #666666");
+    voltdis->setStyleSheet(Styleclassic_window);
     voltdis->setFont(fontMain);
     voltdis->setAlignment(Qt::AlignCenter);
     mvaluehbox->addWidget(voltdis);
@@ -130,11 +129,10 @@ Widget::Widget(QWidget *parent)
     curr->setAlignment(Qt::AlignCenter);
     mnamehbox->addWidget(curr);
 
-    QLabel *currentdis = new QLabel;
+    currentdis = new QLabel;
     currentdis->setText(("0,00A"));
     currentdis->setFixedSize(250,80);
-    currentdis->setStyleSheet("color:#FF9900;"
-                             "background-color: #666666");
+    currentdis->setStyleSheet(Styleclassic_window);
     currentdis->setFont(fontMain);
     currentdis->setAlignment(Qt::AlignCenter);
     mvaluehbox->addWidget(currentdis);
@@ -185,7 +183,7 @@ Widget::Widget(QWidget *parent)
     pow->setStyleSheet("color:#ffff99");
     pow->setFont(fontThird);
     pow->setAlignment(Qt::AlignCenter);
-    QLabel *powerdis = new QLabel("0,00W");
+    powerdis = new QLabel("0,00W");
     powerdis->setStyleSheet(Styleclassic_window);
     powerdis->setFont(fontSecond);
     powerdis->setAlignment(Qt::AlignCenter);
@@ -198,7 +196,7 @@ Widget::Widget(QWidget *parent)
     temp->setStyleSheet("color:#ffff99");
     temp->setFont(fontThird);
     temp->setAlignment(Qt::AlignCenter);
-    QLabel *tempdis = new QLabel("0,00˚C");
+    tempdis = new QLabel("0,00˚C");
     tempdis->setStyleSheet(Styleclassic_window);
     tempdis->setFont(fontSecond);
     tempdis->setAlignment(Qt::AlignCenter);
@@ -211,7 +209,7 @@ Widget::Widget(QWidget *parent)
     Vent->setStyleSheet("color:#ffff99");
     Vent->setFont(fontThird);
     Vent->setAlignment(Qt::AlignCenter);
-    QLabel *ventdis = new QLabel("50%");
+    ventdis = new QLabel("50%");
     ventdis->setStyleSheet(Styleclassic_window);
     ventdis->setFont(fontSecond);
     ventdis->setAlignment(Qt::AlignCenter);
@@ -231,8 +229,10 @@ Widget::Widget(QWidget *parent)
     QObject::connect(m_serial, &QSerialPort::readyRead, [&]() {
         QString mainstr;
         QString voltst;
+        QString ampstr;
         mainstr = (Widget::readData());
         qDebug()<<mainstr;
+        //volts
         if(mainstr.at(1)=='0'){
             voltst = mainstr.mid(2,1);
         }else{
@@ -242,7 +242,39 @@ Widget::Widget(QWidget *parent)
         voltst.append(mainstr.mid(3,2));
         voltst.append("V");
         voltdis->setText(voltst);
+        //amps
+        if(mainstr.at(6)=='0'){
+            ampstr = mainstr.mid(7,1);
+        }else{
+            ampstr = mainstr.mid(6,2);
+        }
+        ampstr.append(",");
+        ampstr.append(mainstr.mid(8,2));
+        ampstr.append("A");
+        currentdis->setText(ampstr);
+        //cv cc
+        if(mainstr.at(11)=='C'){
+            currentdis->setStyleSheet(Stylegreen_window);
+            voltdis->setStyleSheet(Styleclassic_window);
+        }else if(mainstr.at(11)=='V'){
+            currentdis->setStyleSheet(Styleclassic_window);
+            voltdis->setStyleSheet(Stylegreen_window);
+        }else{
+            currentdis->setStyleSheet(Styleclassic_window);
+            voltdis->setStyleSheet(Styleclassic_window);
+        }
 
+        //power
+        QString powu = mainstr.mid(1,4);
+        QString powi = mainstr.mid(6,4);
+        float power = powu.toFloat();
+        power *= powi.toFloat();
+        power /= 10000;
+        QString pow = QString::number(power);
+        powerdis->setText(pow);
+
+        //teplota
+        QString tempstr;
     });
 
 }
@@ -338,7 +370,7 @@ QString Widget::readData()
 
     if(input.size() >= 21){
         if(checkmess(input)){
-            err_count++;
+            setError(2);
             input.clear();
         }else{
             return input;
