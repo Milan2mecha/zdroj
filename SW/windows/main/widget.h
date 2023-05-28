@@ -5,6 +5,8 @@
 #include <QWidget>
 #include <QtSerialPort/QSerialPort>
 #include <QLabel>
+#include <QDoubleSpinBox>
+
 
 
 class Widget : public QWidget
@@ -19,6 +21,10 @@ private:
     QLabel *powerdis;
     QLabel *tempdis;
     QLabel *ventdis;
+
+    //spinboxy
+    QDoubleSpinBox *CCspin;
+    QDoubleSpinBox *CVspin;
 
     void openSerialPort(QString);
     void closeSerialPort();

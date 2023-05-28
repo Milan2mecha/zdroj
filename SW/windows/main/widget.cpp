@@ -35,8 +35,8 @@ QString Styleclassic_window = "background-color: #666666;"
 
 void setError(int i)
 {
-    QString einfo [] = {"Couldn’t open COM port, check connection and try again.", "Kapavka syfilis no to už se hold stává", "Mrdám to tu jedu domů do Kerkonoš", "Jau, zase ten blbej malíček"};
-    QString etext [] = {"COM open error", "nemoc", "Dovolená", "uraz"};
+    QString einfo [] = {"Couldn’t open COM port", "Check connection and try again.", "Temperature reading error.", "Device is overheatted", "Error occured while reading U0", "Error occured while reading U1", "Error occured while reading U2"};
+    QString etext [] = {"COM open error", "Read error", "Device error", "Device error","Device error","Device error","Device error"};
     QMessageBox *errmess = new QMessageBox;
     errmess->setIcon(QMessageBox::Warning);
     errmess->setInformativeText(einfo[i]); //dolní
@@ -145,7 +145,7 @@ Widget::Widget(QWidget *parent)
     CVvbox->addWidget(CV);
 
     //nastavení C.V. double spin boxu
-    QDoubleSpinBox *CVspin = new QDoubleSpinBox;
+    CVspin = new QDoubleSpinBox;
     CVspin->setRange(0,20);
     CVspin->setDecimals(2);
     CVspin->setSingleStep(0.05);
@@ -164,7 +164,7 @@ Widget::Widget(QWidget *parent)
     CCvbox->addWidget(CC);
 
     //nastavení C.C. double spin boxu
-    QDoubleSpinBox *CCspin = new QDoubleSpinBox;
+    CCspin = new QDoubleSpinBox;
     CCspin->setRange(0,2.5);
     CCspin->setDecimals(2);
     CCspin->setSingleStep(0.05);
@@ -217,7 +217,6 @@ Widget::Widget(QWidget *parent)
     vvbox->addWidget(ventdis);
     infohbox->addLayout(vvbox);
 
-    voltdis->setText("Hi!");
     //mainbox layout
     mainbox->addLayout(techhbox);
     mainbox->addLayout(mnamehbox);
@@ -271,10 +270,51 @@ Widget::Widget(QWidget *parent)
         power *= powi.toFloat();
         power /= 10000;
         QString pow = QString::number(power);
-        powerdis->setText(pow);
+        QString powerstr;
+        int index =1;
+        for(int i = 0; i<pow.size(); i++){
+            if(pow.at(i)=='.'){
+                index = i;
+                break;
+            }
+        }
+        powerstr = pow.mid(0,(index));
+        powerstr.append(",");
+        powerstr.append(pow.mid(index+1,2));
+        powerstr.append("W");
+        powerdis->setText(powerstr);
 
         //teplota
         QString tempstr;
+        if(mainstr.at(13)=='0'){
+            tempstr = mainstr.mid(14,1);
+        }else{
+            tempstr = mainstr.mid(13,2);
+        }
+        tempstr.append(",");
+        tempstr.append(mainstr.mid(15,1));
+        tempstr.append("°C");
+        tempdis->setText(tempstr);
+        //percent
+        QString percstr;
+        if((mainstr.at(17)=='9')&&(mainstr.at(18)=='9'))
+        {
+            percstr = "100%";
+        }else if(mainstr.at(17)=='0'){
+            percstr = mainstr.mid(18,1);
+            percstr.append("%");
+        }else{
+            percstr = mainstr.mid(17,2);
+            percstr.append("%");
+        }
+        ventdis->setText(percstr);
+    });
+
+    QObject::connect(CCspin, &QDoubleSpinBox::valueChanged, [&](){
+        qDebug()<<CCspin->value();
+    });
+    QObject::connect(CVspin, &QDoubleSpinBox::valueChanged, [&](){
+        qDebug()<<CCspin->value();
     });
 
 }
@@ -294,9 +334,7 @@ void Widget::openSerialPort(QString name)
         qDebug()<<(tr("Connected to %1")
                          .arg(name));
     } else {
-        QMessageBox::critical(this, tr("Error"), m_serial->errorString());
-
-        setError(1);
+        setError(0);
     }
 }
 
@@ -347,7 +385,26 @@ int checkmess(QString input)
     if(input.at(19)!='|'){
         return(1);
     }
-    if(input.at(20)!='E'){
+    if(input.at(20)!='0'){
+        setError(2);
+        return(1);
+    }else if(input.at(20)!='1'){
+        setError(3);
+        return(1);
+    }
+    else if(input.at(20)!='2'){
+        setError(4);
+        return(1);
+    }
+    else if(input.at(20)!='3'){
+        setError(5);
+        return(1);
+    }
+    else if(input.at(20)!='4'){
+        setError(6);
+        return(1);
+    }
+    else if(input.at(20)!='E'){
         return(1);
     }
     return(0);
@@ -370,20 +427,19 @@ QString Widget::readData()
 
     if(input.size() >= 21){
         if(checkmess(input)){
-            setError(2);
+            err_count++;
             input.clear();
         }else{
             return input;
         }
     }
-    if(err_count >100){
-        setError(2);
+    if(err_count >10){
         err_count = 0;
-        Widget::closeSerialPort();
-
+        setError(1);
+        input.clear();
+        this->closeSerialPort();
     }
-    qDebug()<<input;
-    return input;
+    return "$0000|0000|0|000|00|E";
 }
 
 
