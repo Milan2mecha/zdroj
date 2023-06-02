@@ -25,12 +25,12 @@ QFont fontSecond("Verdana", 20);
 QFont fontThird("Verdana", 15);
 QFont fontFourth("Verdana", 10);
 
-QString Stylegreen_window = "background-color: #666666;"
+QString Stylegreen_window = "background-color: #243B53;"
                             "color:#ffff99;"
-                            "border:5px solid #33CC00";
-QString Styleclassic_window = "background-color: #666666;"
+                            "border:5px solid #243B53";
+QString Styleclassic_window = "background-color: #243B53;"
                               "color:#ffff99;"
-                              "border:1px solid #666666";
+                              "border:1px solid #243B53";
 
 
 void setError(int i)
@@ -49,7 +49,7 @@ Widget::Widget(QWidget *parent)
     : QWidget(parent),
     m_serial(new QSerialPort(this))
 {
-    setStyleSheet("background-color: #333333");
+    setStyleSheet("background-color: #212121");
     QVBoxLayout *mainbox = new QVBoxLayout;
 
     QHBoxLayout *techhbox= new QHBoxLayout;
@@ -71,7 +71,7 @@ Widget::Widget(QWidget *parent)
     static QComboBox *COMBox = new QComboBox;
     COMBox->setFixedSize(80,35);
     COMBox->setStyleSheet("color:#ffff99;"
-                          "background-color: #666666");
+                          "background-color: #243B53");
     COMBox->setFont(fontFourth);
     COMBox->setPlaceholderText(tr("Select"));
     static auto serialPortInfos = QSerialPortInfo::availablePorts();
@@ -88,7 +88,9 @@ Widget::Widget(QWidget *parent)
 
     QPushButton *refreshbutton = new QPushButton;
     refreshbutton->setIcon(QIcon(":/main/icon/refresh.bmp"));
-    refreshbutton->setIconSize(QSize(35,35));
+    refreshbutton->setStyleSheet("background-color: #243B53;"
+                                 "border:1px solid #243B53;");
+    refreshbutton->setIconSize(QSize(40,40));
     refreshbutton->setFixedSize(35,35);
     techhbox->addWidget(refreshbutton);
 
@@ -106,16 +108,21 @@ Widget::Widget(QWidget *parent)
     //output voltage
     QLabel *volt = new QLabel;
     volt->setText(tr("Voltage"));
+    volt->setFixedHeight(35);
     volt->setStyleSheet("color:#ffff99");
-    volt->setFont(fontThird);
+    volt->setFont(fontSecond);
     volt->setAlignment(Qt::AlignCenter);
     mnamehbox->addWidget(volt);
 
 
     voltdis = new QLabel;
     voltdis->setText("00,00V");
-    voltdis->setFixedSize(250,80);
-    voltdis->setStyleSheet(Styleclassic_window);
+    voltdis->setMinimumSize(250,80);
+    voltdis->setStyleSheet(
+        "background-color: #243B53;"
+        "color:#6699FF;"
+        "border:1px solid #243B53;"
+        );
     voltdis->setFont(fontMain);
     voltdis->setAlignment(Qt::AlignCenter);
     mvaluehbox->addWidget(voltdis);
@@ -124,21 +131,25 @@ Widget::Widget(QWidget *parent)
     //output current
     QLabel *curr = new QLabel;
     curr->setText(tr("Current"));
+    curr->setFixedHeight(35);
     curr->setStyleSheet("color:#ffff99");
-    curr->setFont(fontThird);
+    curr->setFont(fontSecond);
     curr->setAlignment(Qt::AlignCenter);
     mnamehbox->addWidget(curr);
 
     currentdis = new QLabel;
     currentdis->setText(("0,00A"));
-    currentdis->setFixedSize(250,80);
-    currentdis->setStyleSheet(Styleclassic_window);
+    currentdis->setMinimumSize(250,80);
+    currentdis->setStyleSheet("background-color: #243B53;"
+                              "color:#FF3333;"
+                              "border:1px solid #243B53;");
     currentdis->setFont(fontMain);
     currentdis->setAlignment(Qt::AlignCenter);
     mvaluehbox->addWidget(currentdis);
 
     //CV
     QLabel *CV= new QLabel("C.V.");
+    CV->setFixedHeight(35);
     CV->setStyleSheet("color:#ffff99");
     CV->setFont(fontSecond);
     CV->setAlignment(Qt::AlignCenter);
@@ -149,7 +160,7 @@ Widget::Widget(QWidget *parent)
     CVspin->setRange(0,20);
     CVspin->setDecimals(2);
     CVspin->setSingleStep(0.05);
-    CVspin->setFixedSize(100,60);
+    CVspin->setMinimumSize(100,60);
     CVspin->setStyleSheet(Styleclassic_window);
     CVspin->setFont(fontSecond);
     CVvbox->addWidget(CVspin);
@@ -158,6 +169,7 @@ Widget::Widget(QWidget *parent)
 
     //CC
     QLabel *CC= new QLabel("C.C.");
+    CC->setFixedHeight(35);
     CC->setStyleSheet("color:#ffff99");
     CC->setFont(fontSecond);
     CC->setAlignment(Qt::AlignCenter);
@@ -168,7 +180,7 @@ Widget::Widget(QWidget *parent)
     CCspin->setRange(0,2.5);
     CCspin->setDecimals(2);
     CCspin->setSingleStep(0.05);
-    CCspin->setFixedSize(100,60);
+    CCspin->setMinimumSize(100,60);
     CCspin->setStyleSheet(Styleclassic_window);
     CCspin->setFont(fontSecond);
     CCvbox->addWidget(CCspin);
@@ -180,6 +192,7 @@ Widget::Widget(QWidget *parent)
 
     //power
     QLabel *pow=new QLabel("Power");
+    pow->setFixedHeight(25);
     pow->setStyleSheet("color:#ffff99");
     pow->setFont(fontThird);
     pow->setAlignment(Qt::AlignCenter);
@@ -193,6 +206,7 @@ Widget::Widget(QWidget *parent)
 
     //temp
     QLabel *temp = new QLabel("Temperature");
+    temp->setFixedHeight(25);
     temp->setStyleSheet("color:#ffff99");
     temp->setFont(fontThird);
     temp->setAlignment(Qt::AlignCenter);
@@ -206,6 +220,7 @@ Widget::Widget(QWidget *parent)
 
     //vent
     QLabel *Vent = new QLabel("Cooling");
+    Vent->setFixedHeight(25);
     Vent->setStyleSheet("color:#ffff99");
     Vent->setFont(fontThird);
     Vent->setAlignment(Qt::AlignCenter);
@@ -221,7 +236,9 @@ Widget::Widget(QWidget *parent)
     mainbox->addLayout(techhbox);
     mainbox->addLayout(mnamehbox);
     mainbox->addLayout(mvaluehbox);
+    mainbox->addSpacing(40);
     mainbox->addLayout(spinhbox);
+    mainbox->addSpacing(10);
     mainbox->addLayout(infohbox);
     setLayout(mainbox);
 
@@ -253,14 +270,14 @@ Widget::Widget(QWidget *parent)
         currentdis->setText(ampstr);
         //cv cc
         if(mainstr.at(11)=='C'){
-            currentdis->setStyleSheet(Stylegreen_window);
-            voltdis->setStyleSheet(Styleclassic_window);
+            CCspin->setStyleSheet(Stylegreen_window);
+            CVspin->setStyleSheet(Styleclassic_window);
         }else if(mainstr.at(11)=='V'){
-            currentdis->setStyleSheet(Styleclassic_window);
-            voltdis->setStyleSheet(Stylegreen_window);
+            CCspin->setStyleSheet(Styleclassic_window);
+            CVspin->setStyleSheet(Stylegreen_window);
         }else{
-            currentdis->setStyleSheet(Styleclassic_window);
-            voltdis->setStyleSheet(Styleclassic_window);
+            CCspin->setStyleSheet(Styleclassic_window);
+            CVspin->setStyleSheet(Styleclassic_window);
         }
 
         //power
