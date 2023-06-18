@@ -6,6 +6,7 @@
 #include <QtSerialPort/QSerialPort>
 #include <QLabel>
 #include <QDoubleSpinBox>
+#include <QPushButton>
 
 
 
@@ -21,6 +22,9 @@ private:
     QLabel *powerdis;
     QLabel *tempdis;
     QLabel *ventdis;
+    QPushButton *tritri;
+    QPushButton *pet;
+    QPushButton *dvanact;
 
     //spinboxy
     QDoubleSpinBox *CCspin;
@@ -32,6 +36,7 @@ private:
     void writeData(const QByteArray  &data);
     QSerialPort *m_serial;
     QString* mainstr;
+    QByteArray* send;
 public:
 
     Widget(QWidget *parent = nullptr);

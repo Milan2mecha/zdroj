@@ -30,7 +30,10 @@ QString Stylegreen_window = "background-color: #243B53;"
                             "border:5px solid #243B53";
 QString Styleclassic_window = "background-color: #243B53;"
                               "color:#ffff99;"
-                              "border:1px solid #243B53";
+                              "border:3px solid #243B53;"
+                              //"QPushButton:pressed {background-color: red;}"
+    ;
+;
 
 
 void setError(int i)
@@ -49,6 +52,7 @@ Widget::Widget(QWidget *parent)
     : QWidget(parent),
     m_serial(new QSerialPort(this))
 {
+    send = new QByteArray;
     setStyleSheet("background-color: #212121");
     QVBoxLayout *mainbox = new QVBoxLayout;
 
@@ -60,6 +64,8 @@ Widget::Widget(QWidget *parent)
     QVBoxLayout *CVvbox = new QVBoxLayout;
     QVBoxLayout *CCvbox = new QVBoxLayout;
     QHBoxLayout *spinhbox = new QHBoxLayout;
+
+    QHBoxLayout *preset = new QHBoxLayout;
 
     QVBoxLayout *vpbox = new QVBoxLayout;
     QVBoxLayout *vtbox= new QVBoxLayout;
@@ -190,6 +196,32 @@ Widget::Widget(QWidget *parent)
     spinhbox->addLayout(CVvbox);
     spinhbox->addLayout(CCvbox);
 
+    //default voltage
+    tritri = new QPushButton;
+    pet = new QPushButton;
+    dvanact = new QPushButton;
+
+    tritri->setText("3,3V 1A");
+    tritri->setStyleSheet(Styleclassic_window);
+    tritri->setFont(fontThird);
+
+    pet->setText( "5V 1A");
+    pet->setStyleSheet(Styleclassic_window);
+    pet->setFont(fontThird);
+
+    dvanact->setText("12V 1A");
+    dvanact->setStyleSheet(Styleclassic_window);
+    dvanact->setFont(fontThird);
+
+
+    preset->addSpacing(10);
+    preset->addWidget(tritri);
+    preset->addSpacing(20);
+    preset->addWidget(pet);
+    preset->addSpacing(20);
+    preset->addWidget(dvanact);
+    preset->addSpacing(10);
+
     //power
     QLabel *pow=new QLabel("Power");
     pow->setFixedHeight(25);
@@ -239,9 +271,24 @@ Widget::Widget(QWidget *parent)
     mainbox->addSpacing(40);
     mainbox->addLayout(spinhbox);
     mainbox->addSpacing(10);
+    mainbox->addLayout(preset);
+    mainbox->addSpacing(10);
     mainbox->addLayout(infohbox);
     setLayout(mainbox);
 
+    QObject::connect(tritri, &QPushButton::clicked, [&](){
+        CCspin->setValue(1.0);
+        CVspin->setValue(3.3);
+    });
+
+    QObject::connect(pet, &QPushButton::clicked, [&](){
+        CCspin->setValue(1.0);
+        CVspin->setValue(5.0);
+    });
+    QObject::connect(dvanact, &QPushButton::clicked, [&](){
+        CCspin->setValue(1.0);
+        CVspin->setValue(12.0);
+    });
     QObject::connect(m_serial, &QSerialPort::readyRead, [&]() {
         QString mainstr;
         QString voltst;
@@ -329,9 +376,10 @@ Widget::Widget(QWidget *parent)
 
     QObject::connect(CCspin, &QDoubleSpinBox::valueChanged, [&](){
         qDebug()<<CCspin->value();
+
     });
     QObject::connect(CVspin, &QDoubleSpinBox::valueChanged, [&](){
-        qDebug()<<CCspin->value();
+        qDebug()<<CVspin->value();
     });
 
 }
@@ -471,7 +519,7 @@ void Widget::writeData(const QByteArray &data)
         const QString error = tr("Failed to write all data to port %1.\n"
                                  "Error: %2").arg(m_serial->portName(),
                                        m_serial->errorString());
-        //setError(2);
+        setError(2);
     }
 }
 
