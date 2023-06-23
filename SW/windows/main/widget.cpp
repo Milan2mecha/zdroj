@@ -17,6 +17,7 @@
 #include <QPushButton>
 #include <QDir>
 #include <QThread>
+#include <QTabWidget>
 
 
 
@@ -47,11 +48,43 @@ void setError(int i)
     errmess->exec();
 }
 
+QByteArray create_packet(float u, float i)
+{
+    QByteArray tmp;
+    QString tmps;
+
+    QString napeti;
+    u = u*100;
+    napeti = QString::number((int)u);
+
+    QString proud;
+    i = i*100;
+    proud = QString::number((int)i);
+
+    tmps = "$";
+    for(int i = 0; i < (4-napeti.size()); i++)
+    {
+        tmps.append("0");
+    }
+    tmps.append(napeti);
+    tmps.append("|");
+    for(int i = 0; i < (4-proud.size()); i++)
+    {
+        tmps.append("0");
+    }
+    tmps.append(proud);
+    tmps.append("|");
+    tmp = tmps.toUtf8();
+    qDebug()<<tmp;
+    return tmp;
+}
+
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent),
     m_serial(new QSerialPort(this))
 {
+    Tabs = new QTabWidget;
     send = new QByteArray;
     setStyleSheet("background-color: #212121");
     QVBoxLayout *mainbox = new QVBoxLayout;
@@ -202,15 +235,52 @@ Widget::Widget(QWidget *parent)
     dvanact = new QPushButton;
 
     tritri->setText("3,3V 1A");
-    tritri->setStyleSheet(Styleclassic_window);
+    tritri->setStyleSheet("background-color: #243B53;"
+                          "color:#ffff99;"
+                          "border:3px solid #243B53;");
+    QObject::connect(tritri,&QPushButton::released, [&](){
+        tritri->setStyleSheet("background-color: #243B53;"
+                           "color:#ffff99;"
+                           "border:3px solid #243B53;");
+    });
+    QObject::connect(tritri,&QPushButton::pressed, [&](){
+        tritri->setStyleSheet("background-color: #212121;"
+                           "color:#ffff99;"
+                           "border:1px solid #000000;");
+    });
     tritri->setFont(fontThird);
 
     pet->setText( "5V 1A");
-    pet->setStyleSheet(Styleclassic_window);
+    pet->setStyleSheet("background-color: #243B53;"
+                           "color:#ffff99;"
+                           "border:3px solid #243B53;");
+    QObject::connect(pet,&QPushButton::released, [&](){
+        pet->setStyleSheet("background-color: #243B53;"
+                               "color:#ffff99;"
+                               "border:3px solid #243B53;");
+    });
+    QObject::connect(pet,&QPushButton::pressed, [&](){
+        pet->setStyleSheet("background-color: #212121;"
+                               "color:#ffff99;"
+                               "border:1px solid #000000;");
+    });
     pet->setFont(fontThird);
 
     dvanact->setText("12V 1A");
-    dvanact->setStyleSheet(Styleclassic_window);
+    dvanact->setStyleSheet("background-color: #243B53;"
+                           "color:#ffff99;"
+                           "border:3px solid #243B53;");
+    QObject::connect(dvanact,&QPushButton::released, [&](){
+    dvanact->setStyleSheet("background-color: #243B53;"
+                       "color:#ffff99;"
+                       "border:3px solid #243B53;");
+    });
+    QObject::connect(dvanact,&QPushButton::pressed, [&](){
+        dvanact->setStyleSheet("background-color: #212121;"
+                               "color:#ffff99;"
+                               "border:1px solid #000000;");
+    });
+
     dvanact->setFont(fontThird);
 
 
@@ -256,7 +326,7 @@ Widget::Widget(QWidget *parent)
     Vent->setStyleSheet("color:#ffff99");
     Vent->setFont(fontThird);
     Vent->setAlignment(Qt::AlignCenter);
-    ventdis = new QLabel("50%");
+    ventdis = new QLabel("0%");
     ventdis->setStyleSheet(Styleclassic_window);
     ventdis->setFont(fontSecond);
     ventdis->setAlignment(Qt::AlignCenter);
@@ -285,10 +355,12 @@ Widget::Widget(QWidget *parent)
         CCspin->setValue(1.0);
         CVspin->setValue(5.0);
     });
+
     QObject::connect(dvanact, &QPushButton::clicked, [&](){
         CCspin->setValue(1.0);
         CVspin->setValue(12.0);
     });
+
     QObject::connect(m_serial, &QSerialPort::readyRead, [&]() {
         QString mainstr;
         QString voltst;
@@ -376,10 +448,11 @@ Widget::Widget(QWidget *parent)
 
     QObject::connect(CCspin, &QDoubleSpinBox::valueChanged, [&](){
         qDebug()<<CCspin->value();
-
+        writeData(create_packet(CVspin->value(), CCspin->value()));
     });
     QObject::connect(CVspin, &QDoubleSpinBox::valueChanged, [&](){
         qDebug()<<CVspin->value();
+        writeData(create_packet(CVspin->value(), CCspin->value()));
     });
 
 }
@@ -439,6 +512,7 @@ int checkmess(QString input)
             return(1);
         }
     }
+    qDebug()<<"ok";
     if(input.at(16)!='|'){
         return(1);
     }
@@ -450,28 +524,29 @@ int checkmess(QString input)
     if(input.at(19)!='|'){
         return(1);
     }
-    if(input.at(20)!='0'){
+    if(input.at(20)=='0'){
         setError(2);
         return(1);
-    }else if(input.at(20)!='1'){
+    }else if(input.at(20)=='1'){
         setError(3);
         return(1);
     }
-    else if(input.at(20)!='2'){
+    else if(input.at(20)=='2'){
         setError(4);
         return(1);
     }
-    else if(input.at(20)!='3'){
+    else if(input.at(20)=='3'){
         setError(5);
         return(1);
     }
-    else if(input.at(20)!='4'){
+    else if(input.at(20)=='4'){
         setError(6);
         return(1);
     }
-    else if(input.at(20)!='E'){
-        return(1);
-    }
+    else if(input.at(20)=='E'){
+
+    }else
+    {return(1);}
     return(0);
 }
 
@@ -480,9 +555,9 @@ QString Widget::readData()
     static int err_count;
     const QByteArray data = m_serial->readAll();
     static QString input;
-    if(input.size()>=21){
+    /*if(input.size()>=25){
         input.clear();
-    }
+    }*/
     input.append(data.data());
     if(input.at(0) != '$')
     {

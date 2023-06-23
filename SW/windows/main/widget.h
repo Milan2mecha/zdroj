@@ -7,7 +7,7 @@
 #include <QLabel>
 #include <QDoubleSpinBox>
 #include <QPushButton>
-
+#include <QTabWidget>
 
 
 class Widget : public QWidget
@@ -25,6 +25,8 @@ private:
     QPushButton *tritri;
     QPushButton *pet;
     QPushButton *dvanact;
+    QTabWidget *Tabs;
+
 
     //spinboxy
     QDoubleSpinBox *CCspin;
