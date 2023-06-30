@@ -27,8 +27,8 @@ QFont fontThird("Verdana", 15);
 QFont fontFourth("Verdana", 10);
 
 QString Stylegreen_window = "background-color: #243B53;"
-                            "color:#ffff99;"
-                            "border:5px solid #243B53";
+                            "color:#32CD32;"
+                            "border:5px solid #32CD32";
 QString Styleclassic_window = "background-color: #243B53;"
                               "color:#ffff99;"
                               "border:3px solid #243B53;"
@@ -388,7 +388,9 @@ Widget::Widget(QWidget *parent)
         ampstr.append("A");
         currentdis->setText(ampstr);
         //cv cc
+
         if(mainstr.at(11)=='C'){
+            qDebug()<<mainstr.at(11)<<"\n";
             CCspin->setStyleSheet(Stylegreen_window);
             CVspin->setStyleSheet(Styleclassic_window);
         }else if(mainstr.at(11)=='V'){
@@ -405,7 +407,7 @@ Widget::Widget(QWidget *parent)
         float power = powu.toFloat();
         power *= powi.toFloat();
         power /= 10000;
-        QString pow = QString::number(power);
+        QString pow = QString::number(power, 'f', 2);
         QString powerstr;
         int index =1;
         for(int i = 0; i<pow.size(); i++){
@@ -555,9 +557,10 @@ QString Widget::readData()
     static int err_count;
     const QByteArray data = m_serial->readAll();
     static QString input;
-    /*if(input.size()>=25){
+    qDebug()<<input;
+    if(input.size()>=25){
         input.clear();
-    }*/
+    }
     input.append(data.data());
     if(input.at(0) != '$')
     {

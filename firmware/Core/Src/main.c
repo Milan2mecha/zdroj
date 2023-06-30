@@ -18,12 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ssd1306.h"
 #include "fonts.h"
 #include <math.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,6 +94,12 @@ uint8_t menupage = 0;
 float setvoltage = 0;
 float setcurrent = 0;
 uint8_t pointer_p1 = 0x01;
+
+//USB
+uint8_t message[22] = "$0000|0000|C|000|00|E";
+uint16_t len = sizeof(message)/sizeof(message[0]);
+uint8_t buffer_usb[12];
+uint8_t receive;
 
 //servisní veličiny
 float Uadc = 3.3;		//vstupní napětí ADC
@@ -185,8 +193,123 @@ void error(uint8_t event)
 	}
 }
 
+//USB
+uint8_t loopcount =0;
+extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
+void read_ser()
+{
+	char u_char[5];
+	for(int i = 0; i<4; i++){
+		u_char[i] = buffer_usb[i+1];
+	}
+	u_char[4] = '\0';
+	setvoltage = atoi(u_char);
+	setvoltage = setvoltage/100;
 
+	char i_char[5];
+	for(int i = 0; i<4; i++){
+		i_char[i] = buffer_usb[i+6];
+	}
+	i_char[4] = '\0';
+	setcurrent = atoi(i_char);
+	setcurrent = setcurrent/100;
 
+}
+void create_mess(float v, float c, uint8_t cvcc, uint8_t err, float teplota, uint16_t vent)
+{
+	//převod float napětí
+	v = v*100;
+	char vs[5];
+	itoa((uint16_t)v, vs, 10);
+	if(v<10){
+		message[1] = '0';
+		message[2] = '0';
+		message[3] = '0';
+		message[4] = vs[0];
+	}else if(v<100){
+		for(int i = 0; i<2; i++){
+			message[i+3] = vs[i];
+		}
+		message[2] = '0';
+		message[1] = '0';
+	}else if(v<1000){
+		for(int i = 0; i<3; i++){
+			message[i+2] = vs[i];
+		}
+		message[1] = '0';
+	}else{
+	for(int i = 1; i<5; i++){
+		message[i] = vs[i-1];
+	}}
+	//převod float proudu
+	c = c*100;
+	char cs[5];
+	itoa((uint16_t)c, cs, 10);
+	if(c<10){
+		message[6] = '0';
+		message[7] = '0';
+		message[8] = '0';
+		message[9] = cs[0];
+	}else if(c<100){
+		for(int i = 0; i<2; i++){
+			message[i+8] = cs[i];
+		}
+		message[7] = '0';
+		message[6] = '0';
+	}else if(c<1000){
+		for(int i = 0; i<3; i++){
+			message[i+7] = cs[i];
+		}
+		message[6] = '0';
+	}else{
+	for(int i = 0; i<4; i++){
+		message[i+6] = cs[i];
+	}}
+	//převod CVCC režimu
+	if(cvcc ==1){
+		message[11] = 'V';
+	}else{
+		message[11] = 'C';
+	}
+	//převod float teploty
+	teplota = 1000*teplota;
+	char teplotas[4];
+	itoa((uint16_t)teplota, teplotas, 10);
+	if(teplota<100){
+		message[13]=teplotas[0];
+		message[14]=teplotas[1];
+		message[15]=teplotas[2];
+	}else if(teplota<10){
+		message[13]='0';
+		message[14]=teplotas[0];
+		message[15]=teplotas[1];
+	}else {
+		message[13]='0';
+		message[14]='0';
+		message[15]=teplotas[0];
+	}
+	//pokud jede vent na 100% odešle hodnotu 99% (kvůli formátu)
+	if(vent == 100)
+	{
+		message[17] = '9';
+		message[18] = '9';
+	}else{
+		char vents[3];
+		itoa(vent, vents, 10);
+		if(vent<10){
+			message[17] = '0';
+			message[18] = vents[0];
+		}else{
+		message[17] = vents[0];
+		message[18] = vents[1];}
+	}
+	//errror mess 99==no error
+	if(err == 99){
+		message[20] = 'E';
+	}else{
+		message[20] = err + '0';
+	}
+}
 
 //vstupy
 
@@ -363,7 +486,7 @@ float ADCtoVoltage(uint16_t ADCvalue)
 float Voltagetoteperatur(float napeti)
 {
 	  napeti = (Uadc/ napeti)-1;
-	  napeti = 1/(((log(napeti))/3380)+(1/298.5));
+	 napeti = 1/(((log(napeti))/3380)+(1/298.5));
 	  napeti = napeti - 273.15; // K => C
 	  return napeti;
 }
@@ -646,13 +769,13 @@ void setIout(float proud)
 		{
 			setcurrent = 0;
 		}
-		if(setcurrent > 2.6)
+		if(setcurrent > 2.8)
 		{
-			setcurrent = 2.6;
+			setcurrent = 2.8;
 		}
-		if(setvoltage > 18)
+		if(setvoltage > 19)
 		{
-			setcurrent = 18;
+			setvoltage = 19;
 		}
 		debounce[4] = 10;
 		}
@@ -694,6 +817,7 @@ int main(void)
   MX_DMA_Init();
   MX_ADC1_Init();
   MX_TIM2_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   SSD1306_Init();
   HAL_ADC_Start_DMA(&hadc1, ADCout, 4);
@@ -706,13 +830,33 @@ int main(void)
 	  SMAU2 [y] = ADCtoVoltage(ADCout[2]);
 	  HAL_Delay(2);
   }
-	/* USER CODE END 2 */
+  /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  SMAy++;
+	  if(SMAy > 49)
+	  {
+		  SMAy = 0;
+	  }
+	  float U0 = 0;
+	  float U1 = 0;
+	  float U2 = 0;
+	  SMAU0[SMAy] = ADCtoVoltage(ADCout[0])*8;
+	  SMAU1[SMAy] = ADCtoVoltage(ADCout[1])*8;
+	  SMAU2[SMAy] = ADCtoVoltage(ADCout[2]);
+	  for(uint8_t y = 0; y<50; y++)
+	  {
+		  U0 = U0 + SMAU0[y];
+		  U1 = U1 + SMAU1[y];
+		  U2 = U2 + SMAU2[y];
 
+	  }
+	  U0 = U0 / 50;
+	  U1 = U1 / 50;
+	  U2 = U2 / 50;
 
 
 	  readbuttons();
@@ -758,28 +902,7 @@ int main(void)
 	  else
 	  {
 		  // není v setmode
-		  uint8_t rezim = 0;
-		  SMAy++;
-		  if(SMAy > 49)
-		  {
-			  SMAy = 0;
-		  }
-		  float U0 = 0;
-		  float U1 = 0;
-		  float U2 = 0;
-		  SMAU0[SMAy] = ADCtoVoltage(ADCout[0])*8;
-		  SMAU1[SMAy] = ADCtoVoltage(ADCout[1])*8;
-		  SMAU2[SMAy] = ADCtoVoltage(ADCout[2]);
-		  for(uint8_t y = 0; y<50; y++)
-		  {
-			  U0 = U0 + SMAU0[y];
-			  U1 = U1 + SMAU1[y];
-			  U2 = U2 + SMAU2[y];
-
-		  }
-		  U0 = U0 / 50;
-		  U1 = U1 / 50;
-		  U2 = U2 / 50;
+		  uint8_t rezim;
 		  if(U1>2)
 		  {
 			  rezim = 2;
@@ -788,7 +911,8 @@ int main(void)
 		  else
 		  {
 			  rezim = 1;
-			  if(((setvoltage - (U0-U1)) > 0.05) | ((setvoltage - (U0-U1)) < -0.05))
+			  //pro potřeby debagu USB zakomentováno dolaďování napětí
+			  /*if(((setvoltage - (U0-U1)) > 0.05) | ((setvoltage - (U0-U1)) < -0.05))
 				{
 				  setVout(setvoltage+U1);
 				}
@@ -802,7 +926,7 @@ int main(void)
 				  {
 					  setVout((setvoltage+U1)-0.1);
 				  }
-			  }
+			  }*/
 		  }
 		  if(U0>24)
 		  {
@@ -828,12 +952,31 @@ int main(void)
 			  Uzobrazene = U0-U1;
 			  Izobrazene = U2;
 			  drawmenu1(0, Mzobrazene, Izobrazene , Uzobrazene);
+			  create_mess(Uzobrazene, Izobrazene, Mzobrazene,99, teplota, ventilatorper);
+			  int pokusy = 0;
+			  while((CDC_Transmit_FS(message, len) != USBD_OK)&&(pokusy<100)){
+				pokusy++;
+			  }
 			  refreshflag = 0;
 		  }
 		  HAL_Delay(1);
 	  }
 	  teplota = Voltagetoteperatur(ADCtoVoltage(ADCout[3]));
 	  ventilator(teplota);
+	  if(receive == 1){
+		receive = 0;
+		read_ser();
+		 setVout(setvoltage);
+		 setIout(setcurrent);
+	  }
+	  loopcount++;
+	  if(loopcount==255){
+		  create_mess(Uzobrazene, Izobrazene, Mzobrazene,99, teplota, ventilatorper);
+		  int pokusy = 0;
+		  while((CDC_Transmit_FS(message, len) != USBD_OK)&&(pokusy<100)){
+			pokusy++;
+		  }
+	  }
 
 
     /* USER CODE END WHILE */
@@ -880,8 +1023,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_USB;
   PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV8;
+  PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_PLL_DIV1_5;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
