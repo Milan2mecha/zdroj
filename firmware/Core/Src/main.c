@@ -122,76 +122,7 @@ void start()
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 1);
 }
 
-//error
-void error(uint8_t event)
-{
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
-	SSD1306_Clear();
-	SSD1306_GotoXY (3,3);
-	SSD1306_Puts("error:", &Font_11x18, 1);
-	SSD1306_GotoXY (3,25);
-	switch (event) {
-		case 0:
-			SSD1306_Puts("mereni tep.", &Font_11x18, 1);
-			SSD1306_GotoXY (3,45);
-			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
-			SSD1306_UpdateScreen();
-			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
-			{
-				HAL_Delay(1);
-			}
-			start();
-			break;
-		case 1:
-			SSD1306_Puts("prehrati", &Font_11x18, 1);
-			SSD1306_GotoXY (3,45);
-			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
-			SSD1306_UpdateScreen();
-			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
-			{
-				HAL_Delay(1);
-			}
-			start();
-			break;
-		case 2:
-			SSD1306_Puts("chyba U0", &Font_11x18, 1);
-			SSD1306_GotoXY (3,45);
-			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
-			SSD1306_UpdateScreen();
-			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
-			{
-				HAL_Delay(1);
-			}
-			start();
-			break;
-		case 3:
-			SSD1306_Puts("chyba U1", &Font_11x18, 1);
-			SSD1306_GotoXY (3,45);
-			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
-			SSD1306_UpdateScreen();
-			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
-			{
-				HAL_Delay(1);
-			}
-			start();
-			break;
-		case 4:
-			SSD1306_Puts("chyba U3", &Font_11x18, 1);
-			SSD1306_GotoXY (3,45);
-			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
-			SSD1306_UpdateScreen();
-			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
-			{
-				HAL_Delay(1);
-			}
-			start();
-			break;
-		default:
-			break;
 
-	}
-}
 
 //USB
 uint8_t loopcount =0;
@@ -275,11 +206,11 @@ void create_mess(float v, float c, uint8_t cvcc, uint8_t err, float teplota, uin
 	teplota = 1000*teplota;
 	char teplotas[4];
 	itoa((uint16_t)teplota, teplotas, 10);
-	if(teplota<100){
+	if(teplota>100){
 		message[13]=teplotas[0];
 		message[14]=teplotas[1];
 		message[15]=teplotas[2];
-	}else if(teplota<10){
+	}else if(teplota>10){
 		message[13]='0';
 		message[14]=teplotas[0];
 		message[15]=teplotas[1];
@@ -311,6 +242,81 @@ void create_mess(float v, float c, uint8_t cvcc, uint8_t err, float teplota, uin
 	}
 }
 
+//error
+void error(uint8_t event)
+{
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, 0);
+	SSD1306_Clear();
+	SSD1306_GotoXY (3,3);
+	SSD1306_Puts("error:", &Font_11x18, 1);
+	SSD1306_GotoXY (3,25);
+	create_mess(Uzobrazene, Izobrazene, Mzobrazene,event, teplota, ventilatorper);
+	int pokusy = 0;
+	while((CDC_Transmit_FS(message, len) != USBD_OK)&&(pokusy<100)){
+		  pokusy++;
+	}
+	switch (event) {
+		case 0:
+			SSD1306_Puts("mereni tep.", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			start();
+			break;
+		case 1:
+			SSD1306_Puts("prehrati", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			start();
+			break;
+		case 2:
+			SSD1306_Puts("chyba U0", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			start();
+			break;
+		case 3:
+			SSD1306_Puts("chyba U1", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			start();
+			break;
+		case 4:
+			SSD1306_Puts("chyba U3", &Font_11x18, 1);
+			SSD1306_GotoXY (3,45);
+			SSD1306_Puts("OK=>reset", &Font_11x18, 1);
+			SSD1306_UpdateScreen();
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) != 0)
+			{
+				HAL_Delay(1);
+			}
+			start();
+			break;
+		default:
+			break;
+
+	}
+}
 //vstupy
 
 void readbuttons()	//pulling tlačítek

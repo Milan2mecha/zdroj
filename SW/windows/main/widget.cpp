@@ -75,7 +75,6 @@ QByteArray create_packet(float u, float i)
     tmps.append(proud);
     tmps.append("|");
     tmp = tmps.toUtf8();
-    qDebug()<<tmp;
     return tmp;
 }
 
@@ -349,16 +348,19 @@ Widget::Widget(QWidget *parent)
     QObject::connect(tritri, &QPushButton::clicked, [&](){
         CCspin->setValue(1.0);
         CVspin->setValue(3.3);
+        writeData(create_packet(CVspin->value(), CCspin->value()));
     });
 
     QObject::connect(pet, &QPushButton::clicked, [&](){
         CCspin->setValue(1.0);
         CVspin->setValue(5.0);
+        writeData(create_packet(CVspin->value(), CCspin->value()));
     });
 
     QObject::connect(dvanact, &QPushButton::clicked, [&](){
         CCspin->setValue(1.0);
         CVspin->setValue(12.0);
+        writeData(create_packet(CVspin->value(), CCspin->value()));
     });
 
     QObject::connect(m_serial, &QSerialPort::readyRead, [&]() {
@@ -366,7 +368,6 @@ Widget::Widget(QWidget *parent)
         QString voltst;
         QString ampstr;
         mainstr = (Widget::readData());
-        qDebug()<<mainstr;
         //volts
         if(mainstr.at(1)=='0'){
             voltst = mainstr.mid(2,1);
@@ -390,7 +391,6 @@ Widget::Widget(QWidget *parent)
         //cv cc
 
         if(mainstr.at(11)=='C'){
-            qDebug()<<mainstr.at(11)<<"\n";
             CCspin->setStyleSheet(Stylegreen_window);
             CVspin->setStyleSheet(Styleclassic_window);
         }else if(mainstr.at(11)=='V'){
@@ -449,11 +449,9 @@ Widget::Widget(QWidget *parent)
     });
 
     QObject::connect(CCspin, &QDoubleSpinBox::valueChanged, [&](){
-        qDebug()<<CCspin->value();
         writeData(create_packet(CVspin->value(), CCspin->value()));
     });
     QObject::connect(CVspin, &QDoubleSpinBox::valueChanged, [&](){
-        qDebug()<<CVspin->value();
         writeData(create_packet(CVspin->value(), CCspin->value()));
     });
 
@@ -471,8 +469,6 @@ void Widget::openSerialPort(QString name)
     m_serial->setStopBits(QSerialPort::OneStop);
     m_serial->setFlowControl(QSerialPort::NoFlowControl);
     if (m_serial->open(QIODevice::ReadWrite)) {
-        qDebug()<<(tr("Connected to %1")
-                         .arg(name));
     } else {
         setError(0);
     }
@@ -514,7 +510,6 @@ int checkmess(QString input)
             return(1);
         }
     }
-    qDebug()<<"ok";
     if(input.at(16)!='|'){
         return(1);
     }
@@ -528,22 +523,22 @@ int checkmess(QString input)
     }
     if(input.at(20)=='0'){
         setError(2);
-        return(1);
+        return(0);
     }else if(input.at(20)=='1'){
         setError(3);
-        return(1);
+        return(0);
     }
     else if(input.at(20)=='2'){
         setError(4);
-        return(1);
+        return(0);
     }
     else if(input.at(20)=='3'){
         setError(5);
-        return(1);
+        return(0);
     }
     else if(input.at(20)=='4'){
         setError(6);
-        return(1);
+        return(0);
     }
     else if(input.at(20)=='E'){
 
@@ -557,7 +552,6 @@ QString Widget::readData()
     static int err_count;
     const QByteArray data = m_serial->readAll();
     static QString input;
-    qDebug()<<input;
     if(input.size()>=25){
         input.clear();
     }
@@ -591,8 +585,7 @@ void Widget::writeData(const QByteArray &data)
 {
     const qint64 written = m_serial->write(data);
     if (written == data.size()) {
-        //m_bytesToWrite += written;
-        //m_timer->start(kWriteTimeout);
+
     } else {
         const QString error = tr("Failed to write all data to port %1.\n"
                                  "Error: %2").arg(m_serial->portName(),
