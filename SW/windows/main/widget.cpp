@@ -35,7 +35,7 @@ QString Styleclassic_window = "background-color: #243B53;"
     ;
 
 
-/*zobrazení vyskakovacího okna s textem chyby*/s
+/*zobrazení vyskakovacího okna s textem chyby*/
 void setError(int i)
 {
     QString einfo [] = {"Couldn’t open COM port", "Check connection and try again.", "Temperature reading error.", "Device is overheatted", "Error occured while reading U0", "Error occured while reading U1", "Error occured while reading U2"};
