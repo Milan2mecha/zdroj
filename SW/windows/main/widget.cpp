@@ -32,22 +32,24 @@ QString Stylegreen_window = "background-color: #243B53;"
 QString Styleclassic_window = "background-color: #243B53;"
                               "color:#ffff99;"
                               "border:3px solid #243B53;"
-                              //"QPushButton:pressed {background-color: red;}"
     ;
-;
 
 
+/*zobrazení vyskakovacího okna s textem chyby*/s
 void setError(int i)
 {
     QString einfo [] = {"Couldn’t open COM port", "Check connection and try again.", "Temperature reading error.", "Device is overheatted", "Error occured while reading U0", "Error occured while reading U1", "Error occured while reading U2"};
     QString etext [] = {"COM open error", "Read error", "Device error", "Device error","Device error","Device error","Device error"};
     QMessageBox *errmess = new QMessageBox;
     errmess->setIcon(QMessageBox::Warning);
-    errmess->setInformativeText(einfo[i]); //dolní
-    errmess->setText(etext[i]);   //horní
+    errmess->setInformativeText(einfo[i]); //dolní text
+    errmess->setText(etext[i]);   //horní text
     errmess->exec();
 }
 
+/*funkce vytvářející rámec k odeslání ve formátu:
+ * $VVVV|CCCC|
+ */
 QByteArray create_packet(float u, float i)
 {
     QByteArray tmp;
@@ -78,14 +80,15 @@ QByteArray create_packet(float u, float i)
     return tmp;
 }
 
-
+//konstruktor
 Widget::Widget(QWidget *parent)
     : QWidget(parent),
     m_serial(new QSerialPort(this))
 {
-    Tabs = new QTabWidget;
-    send = new QByteArray;
+
+    //layout boxy
     setStyleSheet("background-color: #212121");
+
     QVBoxLayout *mainbox = new QVBoxLayout;
 
     QHBoxLayout *techhbox= new QHBoxLayout;
@@ -105,7 +108,7 @@ Widget::Widget(QWidget *parent)
     QHBoxLayout *infohbox= new QHBoxLayout;
 
 
-    //COM settings
+    //nastavení COMportu
     static QComboBox *COMBox = new QComboBox;
     COMBox->setFixedSize(80,35);
     COMBox->setStyleSheet("color:#ffff99;"
@@ -121,9 +124,9 @@ Widget::Widget(QWidget *parent)
     QObject::connect(COMBox, &QComboBox::activated,this,[this](int index){
         Widget::closeSerialPort();
         Widget::openSerialPort(serialPortInfos.at(index).portName());
-        /*Odeslání případných dat*/
     });
 
+    //refresh seznamu COMportů
     QPushButton *refreshbutton = new QPushButton;
     refreshbutton->setIcon(QIcon(":/main/icon/refresh.bmp"));
     refreshbutton->setStyleSheet("background-color: #243B53;"
@@ -228,11 +231,12 @@ Widget::Widget(QWidget *parent)
     spinhbox->addLayout(CVvbox);
     spinhbox->addLayout(CCvbox);
 
-    //default voltage
+    //tlačítka pro standardní napětí
     tritri = new QPushButton;
     pet = new QPushButton;
     dvanact = new QPushButton;
 
+    //3,3V 1A
     tritri->setText("3,3V 1A");
     tritri->setStyleSheet("background-color: #243B53;"
                           "color:#ffff99;"
@@ -249,6 +253,7 @@ Widget::Widget(QWidget *parent)
     });
     tritri->setFont(fontThird);
 
+    //5V 1A
     pet->setText( "5V 1A");
     pet->setStyleSheet("background-color: #243B53;"
                            "color:#ffff99;"
@@ -265,6 +270,7 @@ Widget::Widget(QWidget *parent)
     });
     pet->setFont(fontThird);
 
+    //12V 1A
     dvanact->setText("12V 1A");
     dvanact->setStyleSheet("background-color: #243B53;"
                            "color:#ffff99;"
@@ -345,6 +351,9 @@ Widget::Widget(QWidget *parent)
     mainbox->addLayout(infohbox);
     setLayout(mainbox);
 
+    /*
+     * event kliknutí na přednastavená napětí
+    naství hodnoty spinboxů a odešle údaje přes COMport*/
     QObject::connect(tritri, &QPushButton::clicked, [&](){
         CCspin->setValue(1.0);
         CVspin->setValue(3.3);
@@ -363,10 +372,14 @@ Widget::Widget(QWidget *parent)
         writeData(create_packet(CVspin->value(), CCspin->value()));
     });
 
+
+    /*
+     * event přijetí dat z COMportu*/
     QObject::connect(m_serial, &QSerialPort::readyRead, [&]() {
         QString mainstr;
         QString voltst;
         QString ampstr;
+        //napětí
         mainstr = (Widget::readData());
         //volts
         if(mainstr.at(1)=='0'){
@@ -378,7 +391,8 @@ Widget::Widget(QWidget *parent)
         voltst.append(mainstr.mid(3,2));
         voltst.append("V");
         voltdis->setText(voltst);
-        //amps
+
+        //proud
         if(mainstr.at(6)=='0'){
             ampstr = mainstr.mid(7,1);
         }else{
@@ -388,8 +402,8 @@ Widget::Widget(QWidget *parent)
         ampstr.append(mainstr.mid(8,2));
         ampstr.append("A");
         currentdis->setText(ampstr);
-        //cv cc
 
+        //cv cc
         if(mainstr.at(11)=='C'){
             CCspin->setStyleSheet(Stylegreen_window);
             CVspin->setStyleSheet(Styleclassic_window);
@@ -433,7 +447,8 @@ Widget::Widget(QWidget *parent)
         tempstr.append(mainstr.mid(15,1));
         tempstr.append("°C");
         tempdis->setText(tempstr);
-        //percent
+
+        //střída ventilátoru v %
         QString percstr;
         if((mainstr.at(17)=='9')&&(mainstr.at(18)=='9'))
         {
@@ -448,6 +463,9 @@ Widget::Widget(QWidget *parent)
         ventdis->setText(percstr);
     });
 
+    /*
+     * odeslání dat při pohybu spinboxu
+     */
     QObject::connect(CCspin, &QDoubleSpinBox::valueChanged, [&](){
         writeData(create_packet(CVspin->value(), CCspin->value()));
     });
@@ -457,8 +475,9 @@ Widget::Widget(QWidget *parent)
 
 }
 
-
-
+/*
+ * Otevření seriového portu
+ */
 void Widget::openSerialPort(QString name)
 {
 
@@ -474,12 +493,19 @@ void Widget::openSerialPort(QString name)
     }
 }
 
+/*
+ * Zavření seriového portu
+ */
 void Widget::closeSerialPort()
 {
     if (m_serial->isOpen())
         m_serial->close();
 }
 
+/*
+ * Kontrola správnsti formátu přijatého rámce
+ *  $VVVV|CCCC|C.V./C.C.|TTT|VV|E
+ */
 int checkmess(QString input)
 {
     for(int i = 1; i<5; i++)
@@ -547,6 +573,9 @@ int checkmess(QString input)
     return(0);
 }
 
+/*
+ * Přijetí dat ze seriového portu
+ */
 QString Widget::readData()
 {
     static int err_count;
@@ -580,21 +609,21 @@ QString Widget::readData()
 }
 
 
-
+/*
+ * Zápis dat do COMportu
+ */
 void Widget::writeData(const QByteArray &data)
 {
     const qint64 written = m_serial->write(data);
     if (written == data.size()) {
-
     } else {
-        const QString error = tr("Failed to write all data to port %1.\n"
-                                 "Error: %2").arg(m_serial->portName(),
-                                       m_serial->errorString());
         setError(2);
     }
 }
 
-
+/*
+ * Dekonstruktor
+ */
 Widget::~Widget()
 {
     Widget::closeSerialPort();

@@ -94,7 +94,7 @@ uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
-extern uint8_t buffer_usb[12];
+extern uint8_t buffer_usb[12]; //buffer odeslání
 extern uint8_t receive;
 char buf[7];
 /* USER CODE END PRIVATE_VARIABLES */
@@ -265,9 +265,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+  //zkopírování textu do buffer
   memset (buffer_usb, '\n', 11);
 	  memcpy(buffer_usb, Buf, 88);
-	  receive = 1;
+	  receive = 1;  //příznak přijetí
   memset(Buf, '\0', 88);
   return (USBD_OK);
   /* USER CODE END 6 */

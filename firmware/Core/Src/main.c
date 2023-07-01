@@ -75,13 +75,12 @@ float Izobrazene = 0;
 float Mzobrazene = 0;
 float teplota = 0;
 uint8_t dataDAC [3] = {0x40, 0x0, 0x0};
-uint32_t ADCout [4];
-float SMAU0 [50];
-float SMAU1 [50];
-float SMAU2 [50];
-uint8_t SMAy = 0;
-//mód zobrazení
-uint16_t setmodeflag = 0;
+uint32_t ADCout [4];					
+float SMAU0 [50];							//SIMPLE MOVING AVERAGE U0
+float SMAU1 [50];							//SIMPLE MOVING AVERAGE U1
+float SMAU2 [50];							//SIMPLE MOVING AVERAGE U2
+uint8_t SMAy = 0;							//SIMPLE MOVING AVERAGE index
+uint16_t setmodeflag = 0; 					//mód zobrazení
 
 //polling
 uint8_t tlacitko [4];
@@ -96,21 +95,21 @@ float setcurrent = 0;
 uint8_t pointer_p1 = 0x01;
 
 //USB
-uint8_t message[22] = "$0000|0000|C|000|00|E";
-uint16_t len = sizeof(message)/sizeof(message[0]);
-uint8_t buffer_usb[12];
-uint8_t receive;
+uint8_t message[22] = "$0000|0000|C|000|00|E";				//odesílaná zpráva
+uint16_t len = sizeof(message)/sizeof(message[0]);			//délka odesílané zprávy
+uint8_t buffer_usb[12];										//buffer přijaté zprávy
+uint8_t receive;											//příznak přijetí nové zprávy
 
 //servisní veličiny
 float Uadc = 3.3;		//vstupní napětí ADC
 float offset = 0.0;		//offset ADC
-float napetiBUCK[16] = {0, 0, 0.79, 2.40, 3.52, 5.10, 5.90, 8.50, 8.80, 11.30, 12.20, 14.37, 14.97, 16.63, 17.40, 18.71};
+float napetiBUCK[16] = {0, 0, 0.79, 2.40, 3.52, 5.10, 5.90, 8.50, 8.80, 11.30, 12.20, 14.37, 14.97, 16.63, 17.40, 18.71};	//převodní tabulka výstupních napětí BUCK reguátoru
 uint8_t dataBUCK[16] = {0, 1, 2, 4, 3, 5, 6, 7, 8, 9, 10, 12, 11, 13, 14, 15};
 
 //chlazení
 uint16_t ventilatorper = 0;  //výkon ventilátoru v %
 uint8_t ventilatorhyst = 0;	//hystereze ventilatoru
-//start
+//startovní sekvence
 void start()
 {
 	SSD1306_Clear();
@@ -125,27 +124,32 @@ void start()
 
 
 //USB
-uint8_t loopcount =0;
-extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
+uint8_t loopcount = 0;		//loopcount pro odeslání každých 256 cyklů
+extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);	//odkaz na funkci odeslání z "usbd_cdc_if.c"
+
+//funkce rozložení přijatého rámce do globálních proměnných
 void read_ser()
 {
-	char u_char[5];
+	char u_char[5];	//string napětí
 	for(int i = 0; i<4; i++){
 		u_char[i] = buffer_usb[i+1];
 	}
 	u_char[4] = '\0';
-	setvoltage = atoi(u_char);
-	setvoltage = setvoltage/100;
+	setvoltage = atoi(u_char);	//převod na číslo
+	setvoltage = setvoltage/100;	//vložení do globální proměnné
 
-	char i_char[5];
-	for(int i = 0; i<4; i++){
+	char i_char[5]; //string proudu
+	for(int i = 0; i<4; i++){	
 		i_char[i] = buffer_usb[i+6];
 	}
 	i_char[4] = '\0';
-	setcurrent = atoi(i_char);
-	setcurrent = setcurrent/100;
+	setcurrent = atoi(i_char);	//převod na číslo
+	setcurrent = setcurrent/100;	//vložení do globální proměnné
 
 }
+
+
+//vytvoření rámce
 void create_mess(float v, float c, uint8_t cvcc, uint8_t err, float teplota, uint16_t vent)
 {
 	//převod float napětí
@@ -172,6 +176,7 @@ void create_mess(float v, float c, uint8_t cvcc, uint8_t err, float teplota, uin
 	for(int i = 1; i<5; i++){
 		message[i] = vs[i-1];
 	}}
+
 	//převod float proudu
 	c = c*100;
 	char cs[5];
@@ -242,7 +247,9 @@ void create_mess(float v, float c, uint8_t cvcc, uint8_t err, float teplota, uin
 	}
 }
 
-//error
+//funkce error handleru
+/*po zachycení chyby dojde k odpojení výstupního napětí a odeslání rámce s kódem chyby 
+ ta je zároveň vypsána na display zařízení a zařízení vyčkává na stisknutí potvzení na tlačítku na zařízení*/
 void error(uint8_t event)
 {
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, 0);
@@ -829,6 +836,7 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, ADCout, 4);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   start();
+  //úvodní naplnění SMA
   for(uint8_t y; y<50;y++)
   {
 	  SMAU0 [y] = ADCtoVoltage(ADCout[0])*8;
@@ -842,6 +850,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	//Iterace SMA
 	  SMAy++;
 	  if(SMAy > 49)
 	  {
@@ -911,11 +920,13 @@ int main(void)
 		  uint8_t rezim;
 		  if(U1>2)
 		  {
+			//režim proudového zdroje
 			  rezim = 2;
 
 		  }
 		  else
 		  {
+			//režim napěťového zdroje
 			  rezim = 1;
 			  //pro potřeby debagu USB zakomentováno dolaďování napětí
 			  /*if(((setvoltage - (U0-U1)) > 0.05) | ((setvoltage - (U0-U1)) < -0.05))
@@ -936,28 +947,36 @@ int main(void)
 		  }
 		  if(U0>24)
 		  {
+			//přepětí (chyba měření)
 			  error(2);
 		  }
 		  if(U1>24)
 		  {
+			//přepětí (chyba měření)
 			  error(3);
 		  }
 		  if(U2>3)
 		  {
+			//naproud (zkrat nezachycený proudovým regulátorem)
 			  error(4);
 		  }
+		  
+		  //podmínky pro překreslení displeje
 		  if(((Uzobrazene - (U0-U1))>0.05) | ((Uzobrazene - (U0-U1)) < -0.05))
 		  {refreshflag = 1;}
 		  if(((Izobrazene - U2)>0.02) | ((Izobrazene - U2) < -0.02))
 		  {refreshflag = 1;}
 		  if(rezim != Mzobrazene)
 		  {refreshflag = 1;}
-		  if(refreshflag > 0)  // pokud je příznak změny údajů na display obnoví display
+
+		  // pokud je příznak změny údajů na display obnoví display
+		  if(refreshflag > 0)  
 		  {
 			  Mzobrazene = rezim;
 			  Uzobrazene = U0-U1;
 			  Izobrazene = U2;
 			  drawmenu1(0, Mzobrazene, Izobrazene , Uzobrazene);
+			  //sestavení zprávy pro COM a odeslání (max 100 pokusů)
 			  create_mess(Uzobrazene, Izobrazene, Mzobrazene,99, teplota, ventilatorper);
 			  int pokusy = 0;
 			  while((CDC_Transmit_FS(message, len) != USBD_OK)&&(pokusy<100)){
@@ -975,6 +994,7 @@ int main(void)
 		 setVout(setvoltage);
 		 setIout(setcurrent);
 	  }
+	  //sestavení zprávy pro COM a odeslání každých 255 cyklů. Slouží pro  stavy kdy dlouho nedochází ke změně proudu či napětí ale je třeba udržovat údaje o teplotě a chlazení aktuální(max 100 pokusů)
 	  loopcount++;
 	  if(loopcount==255){
 		  create_mess(Uzobrazene, Izobrazene, Mzobrazene,99, teplota, ventilatorper);
